@@ -121,7 +121,8 @@ export default function LoginPage() {
     if (status !== "authenticated") return;
 
     if (isAdmin) {
-      router.replace("/admin");
+      // router.replace("/admin");
+      // window.location.replace("/admin");  
     }
   }, [status, isAdmin, router]);
 
@@ -142,9 +143,8 @@ export default function LoginPage() {
     }
   }
 
-  async function handleLogin(e) {
+ async function handleLogin(e) {
     e.preventDefault();
-
     clearMessages();
 
     if (!email.trim()) {
@@ -165,56 +165,22 @@ export default function LoginPage() {
         password,
       });
 
-      console.log("=================================");
-      console.log("ADMIN LOGIN USER:", loggedInUser);
-      console.log("ADMIN LOGIN ROLE:", loggedInUser?.role);
-      console.log("=================================");
-
-      if (!loggedInUser) {
-        setError("Login failed. Please try again.");
-        return;
-      }
-
-      /*
-       * ADMIN LOGIN ONLY
-       */
-
-      if (loggedInUser.role !== "ADMIN") {
-        setError(
-          "Access denied. This account does not have administrator access."
-        );
-
+      if (!loggedInUser || loggedInUser.role !== "ADMIN") {
+        setError("Access denied. This account does not have administrator access.");
         await logout();
-
         return;
       }
-      /*
-       * Admin authenticated successfully
-       */
 
-      console.log("BEFORE ADMIN REDIRECT");
-      console.log("loggedInUser:", loggedInUser);
-      console.log("role:", loggedInUser?.role);
-      console.log("current URL:", window.location.href);
-
-      console.log("BEFORE REDIRECT TO ADMIN");
-
-      // setTimeout(() => {
-        console.log("REDIRECTING NOW");
-      router.push("/admin");
-      // }, 30000);
+      // Force a hard location change. This ensures cookies are fully sent 
+      // and the server-rendered/middleware environment picks up the fresh context.
+      window.location.href = "/admin";
 
     } catch (err) {
       console.error("Admin login error:", err);
-
       if (err instanceof ApiError) {
-        setError(
-          err.message || "Invalid admin credentials."
-        );
+        setError(err.message || "Invalid admin credentials.");
       } else {
-        setError(
-          "Unable to sign in. Please try again."
-        );
+        setError("Unable to sign in. Please try again.");
       }
     } finally {
       setSubmitting(false);

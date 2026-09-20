@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 // The refresh cookie name must match what the backend sets.
-const REFRESH_COOKIE_NAME = process.env.REFRESH_COOKIE_NAME || 'refreshToken';
+const REFRESH_COOKIE_NAME = 'refreshToken';
 
 // Routes only accessible when NOT logged in
 const AUTH_ONLY_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password'];
