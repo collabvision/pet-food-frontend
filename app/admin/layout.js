@@ -4,197 +4,444 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { 
-  LayoutDashboard, Package, FolderTree, Archive, ShoppingCart, 
-  Users, FileText, RefreshCcw, CreditCard, Truck, Bell, 
-  Tag, Users2, Plug, BarChart2, Settings, Search, HelpCircle, ChevronLeft,
-  LogOut, Loader2, User
+
+import {
+  LayoutDashboard,
+  Package,
+  FolderTree,
+  Archive,
+  ShoppingCart,
+  Users,
+  FileText,
+  RefreshCcw,
+  CreditCard,
+  Truck,
+  Bell,
+  Tag,
+  Users2,
+  Plug,
+  BarChart2,
+  Settings,
+  Search,
+  HelpCircle,
+  ChevronLeft,
+  LogOut,
+  Loader2,
+  User,
 } from "lucide-react";
 
 export default function AdminLayout({ children }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, status, isAdmin, logout } = useAuth();
+
+  const {
+    user,
+    status,
+    isAdmin,
+    logout,
+  } = useAuth();
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // Skip guard for /admin/login itself
-  const isLoginPage = pathname === '/admin/login';
-  const isAccountPage = pathname === '/admin/account';
+  /*
+   * ONLY the admin login page should bypass
+   * the admin authentication check.
+   *
+   * Do NOT bypass /admin/account.
+   */
+  const isLoginPage = pathname === "/admin/login";
 
-useEffect(() => {
-  if (isLoginPage || isAccountPage) return;
-  if (status === 'loading') return;
+  /*
+   * Protect every admin page except /admin/login.
+   */
+  useEffect(() => {
+    if (isLoginPage) return;
 
-  if (status === 'guest' || !isAdmin) {
-    router.replace('/admin/login');
+    // Wait until AuthProvider finishes checking auth
+    if (status === "loading") return;
+
+    // User is not logged in OR user is not an admin
+    if (status === "guest" || !isAdmin) {
+      router.replace("/admin/login");
+    }
+  }, [status, isAdmin, router, isLoginPage]);
+
+  /*
+   * Admin login page does not need:
+   * - sidebar
+   * - admin header
+   * - admin authentication guard
+   */
+  if (isLoginPage) {
+    return <>{children}</>;
   }
-}, [status, isAdmin, router, isLoginPage, isAccountPage]);
 
-  // Show the login page directly (no sidebar needed)
-  if (isLoginPage || isAccountPage) {
-  return <>{children}</>;
-}
-  // if (isLoginPage) return <>{children}</>;
-
-  // While checking auth, show a dark loader
-  if (status === 'loading' || !isAdmin) {
+  /*
+   * While authentication is being checked,
+   * show loading screen.
+   */
+  if (status === "loading") {
     return (
-      <div style={{
-        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: '#0f172a',
-      }}>
-        <Loader2 size={40} color="#6366f1" style={{ animation: 'spin 1s linear infinite' }} />
-        <style>{`@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#0f172a",
+        }}
+      >
+        <Loader2
+          size={40}
+          color="#6366f1"
+          style={{
+            animation: "spin 1s linear infinite",
+          }}
+        />
+
+        <style>{`
+          @keyframes spin {
+            from {
+              transform: rotate(0deg);
+            }
+
+            to {
+              transform: rotate(360deg);
+            }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  /*
+   * If the user is not admin, don't render
+   * the admin UI while redirecting.
+   */
+  if (status === "guest" || !isAdmin) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#0f172a",
+        }}
+      >
+        <Loader2
+          size={40}
+          color="#6366f1"
+          style={{
+            animation: "spin 1s linear infinite",
+          }}
+        />
+
+        <style>{`
+          @keyframes spin {
+            from {
+              transform: rotate(0deg);
+            }
+
+            to {
+              transform: rotate(360deg);
+            }
+          }
+        `}</style>
       </div>
     );
   }
 
   const menuItems = [
-    { name: "Dashboard", href: "/admin", icon: <LayoutDashboard className="w-5 h-5" /> },
-    { name: "Products", href: "/admin/products", icon: <Package className="w-5 h-5" /> },
-    { name: "Categories", href: "/admin/categories", icon: <FolderTree className="w-5 h-5" /> },
-    { name: "Inventory", href: "/admin/inventory", icon: <Archive className="w-5 h-5" /> },
-    { name: "Orders", href: "/admin/orders", icon: <ShoppingCart className="w-5 h-5" /> },
-    { name: "Customers", href: "/admin/customers", icon: <Users className="w-5 h-5" /> },
-    { name: "Prescriptions", href: "/admin/prescriptions", icon: <FileText className="w-5 h-5" /> },
-    { name: "Returns & Refunds", href: "/admin/returns", icon: <RefreshCcw className="w-5 h-5" /> },
-    { name: "Payments", href: "/admin/payments", icon: <CreditCard className="w-5 h-5" /> },
-    { name: "Shipments", href: "/admin/shipments", icon: <Truck className="w-5 h-5" /> },
-    { name: "Notifications", href: "/admin/notifications", icon: <Bell className="w-5 h-5" /> },
-    { name: "Offers & Banners", href: "/admin/offers", icon: <Tag className="w-5 h-5" /> },
-    { name: "Community", href: "/admin/community", icon: <Users2 className="w-5 h-5" /> },
-    { name: "Integrations", href: "/admin/integrations", icon: <Plug className="w-5 h-5" /> },
-    { name: "Reports", href: "/admin/reports", icon: <BarChart2 className="w-5 h-5" /> },
-    { name: "My Account", href: "/admin/account", icon: <User className="w-5 h-5" /> },
-    { name: "Settings", href: "/admin/settings", icon: <Settings className="w-5 h-5" /> },
+    {
+      title: "Dashboard",
+      href: "/admin",
+      icon: LayoutDashboard,
+    },
+    {
+      title: "Products",
+      href: "/admin/products",
+      icon: Package,
+    },
+    {
+      title: "Categories",
+      href: "/admin/categories",
+      icon: FolderTree,
+    },
+    {
+      title: "Inventory",
+      href: "/admin/inventory",
+      icon: Archive,
+    },
+    {
+      title: "Orders",
+      href: "/admin/orders",
+      icon: ShoppingCart,
+    },
+    {
+      title: "Customers",
+      href: "/admin/customers",
+      icon: Users,
+    },
+    {
+      title: "Prescriptions",
+      href: "/admin/prescriptions",
+      icon: FileText,
+    },
+    {
+      title: "Returns",
+      href: "/admin/returns",
+      icon: RefreshCcw,
+    },
+    {
+      title: "Payments",
+      href: "/admin/payments",
+      icon: CreditCard,
+    },
+    {
+      title: "Shipments",
+      href: "/admin/shipments",
+      icon: Truck,
+    },
+    {
+      title: "Notifications",
+      href: "/admin/notifications",
+      icon: Bell,
+    },
+    {
+      title: "Offers",
+      href: "/admin/offers",
+      icon: Tag,
+    },
+    {
+      title: "Community",
+      href: "/admin/community",
+      icon: Users2,
+    },
+    {
+      title: "Integrations",
+      href: "/admin/integrations",
+      icon: Plug,
+    },
+    {
+      title: "Reports",
+      href: "/admin/reports",
+      icon: BarChart2,
+    },
+    {
+      title: "Settings",
+      href: "/admin/settings",
+      icon: Settings,
+    },
   ];
 
+  const isActive = (href) => {
+    if (href === "/admin") {
+      return pathname === "/admin";
+    }
+
+    return pathname.startsWith(href);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      router.replace("/admin/login");
+    }
+  };
+
   return (
-    <div className="flex h-screen bg-[#FDF8F5] overflow-hidden font-sans text-gray-800">
-      
-      {/* Sidebar */}
-      <div className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-gray-200 flex flex-col transition-all duration-300 shadow-sm relative z-20`}>
-        {/* Logo Area */}
-        <div className="h-20 flex items-center px-6 border-b border-gray-100">
-           <div className="flex items-center gap-3 w-full">
-              <div className="text-2xl font-black text-[#1e2338] relative flex shrink-0">
-                 🐾 <span className="absolute -top-1 -right-2 text-xs text-red-500 bg-red-100 rounded-full w-4 h-4 flex items-center justify-center font-bold">2</span>
-              </div>
-              {sidebarOpen && (
-                <div className="flex flex-col">
-                  <span className="font-black text-xl text-[#1e2338] tracking-tight leading-none">FurNest</span>
-                  <span className="text-[10px] text-gray-500 font-medium">Happy Pets. Happier Humans.</span>
-                </div>
-              )}
-           </div>
-        </div>
-
-        {/* Scrollable Nav */}
-        <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1 custom-scrollbar">
-          {menuItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link 
-                key={item.name} 
-                href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold transition-colors ${
-                  isActive 
-                    ? "bg-red-50 text-red-900" 
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                }`}
-                title={!sidebarOpen ? item.name : undefined}
-              >
-                {/* Visual marker for active state */}
-                {isActive && <div className="absolute left-0 w-1 h-8 bg-red-500 rounded-r-full"></div>}
-                <div className={`${isActive ? 'text-red-500' : 'text-gray-500'}`}>{item.icon}</div>
-                {sidebarOpen && <span className="text-sm">{item.name}</span>}
-              </Link>
-            );
-          })}
-        </div>
-
-        {/* Support Section */}
-        <div className="p-4 border-t border-gray-100">
-          <div className={`bg-[#E8F0FE] rounded-2xl p-4 relative overflow-hidden ${!sidebarOpen && 'hidden'}`}>
-             <div className="absolute top-0 right-0 p-2 opacity-20">
-                <HelpCircle className="w-12 h-12 text-blue-900" />
-             </div>
-             <div className="flex items-start gap-3 relative z-10">
-                <div className="bg-blue-900 text-white p-2 rounded-xl mt-1">
-                   <HelpCircle className="w-5 h-5" />
-                </div>
-                <div>
-                   <p className="text-sm font-bold text-blue-900">Need Help?</p>
-                   <p className="text-xs text-blue-700 flex items-center gap-1 mt-1 cursor-pointer hover:underline">
-                     Contact Support <span>→</span>
-                   </p>
-                </div>
-             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        
-        {/* Top Header */}
-        <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0 relative z-10">
-          <div className="flex items-center gap-4 flex-1">
-            <button 
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="text-gray-400 hover:text-gray-600 bg-gray-50 p-2 rounded-lg"
+    <div className="min-h-screen bg-[#FDF8F5] text-[#1e2338]">
+      {/* ================= SIDEBAR ================= */}
+      <aside
+        className={`fixed left-0 top-0 z-50 h-screen border-r border-gray-200 bg-white transition-all duration-300 ${
+          sidebarOpen ? "w-64" : "w-20"
+        }`}
+      >
+        {/* Logo */}
+        <div className="flex h-20 items-center justify-between border-b border-gray-100 px-4">
+          {sidebarOpen ? (
+            <Link
+              href="/admin"
+              className="flex items-center gap-3"
             >
-              <ChevronLeft className={`w-5 h-5 transition-transform ${!sidebarOpen && 'rotate-180'}`} />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1e2338] text-white">
+                <span className="text-lg font-bold">
+                  F
+                </span>
+              </div>
+
+              <div>
+                <h1 className="text-lg font-bold text-[#1e2338]">
+                  FurNest
+                </h1>
+
+                <p className="text-xs text-gray-500">
+                  Admin Panel
+                </p>
+              </div>
+            </Link>
+          ) : (
+            <Link
+              href="/admin"
+              className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-[#1e2338] text-white"
+            >
+              <span className="text-lg font-bold">
+                F
+              </span>
+            </Link>
+          )}
+        </div>
+
+        {/* Sidebar Menu */}
+        <div className="h-[calc(100vh-80px)] overflow-y-auto px-3 py-5">
+          <nav className="space-y-1">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${
+                    active
+                      ? "bg-[#1e2338] text-white"
+                      : "text-gray-600 hover:bg-gray-100 hover:text-[#1e2338]"
+                  }`}
+                >
+                  <Icon
+                    size={19}
+                    className="shrink-0"
+                  />
+
+                  {sidebarOpen && (
+                    <span>{item.title}</span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Help Card */}
+          {sidebarOpen && (
+            <div className="mt-8 rounded-2xl bg-[#eef2ff] p-4">
+              <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-white">
+                <HelpCircle
+                  size={20}
+                  className="text-[#4f46e5]"
+                />
+              </div>
+
+              <h3 className="text-sm font-semibold text-[#1e2338]">
+                Need Help?
+              </h3>
+
+              <p className="mt-1 text-xs leading-5 text-gray-500">
+                Check the admin documentation or contact support.
+              </p>
+
+              <button
+                type="button"
+                className="mt-3 text-xs font-semibold text-[#4f46e5] hover:underline"
+              >
+                View Documentation
+              </button>
+            </div>
+          )}
+        </div>
+      </aside>
+
+      {/* ================= MAIN AREA ================= */}
+      <div
+        className={`transition-all duration-300 ${
+          sidebarOpen ? "ml-64" : "ml-20"
+        }`}
+      >
+        {/* ================= HEADER ================= */}
+        <header className="sticky top-0 z-40 flex h-20 items-center justify-between border-b border-gray-200 bg-white/95 px-6 backdrop-blur">
+          <div className="flex items-center gap-4">
+            {/* Sidebar Toggle */}
+            <button
+              type="button"
+              onClick={() =>
+                setSidebarOpen((prev) => !prev)
+              }
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 hover:text-[#1e2338]"
+            >
+              <ChevronLeft
+                size={20}
+                className={`transition-transform ${
+                  sidebarOpen ? "" : "rotate-180"
+                }`}
+              />
             </button>
 
-            <div className="max-w-md w-full relative">
-               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-               <input 
-                 type="text" 
-                 placeholder="Search products, orders, customers, prescriptions..." 
-                 className="w-full bg-gray-50 border border-gray-200 rounded-full py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-shadow"
-               />
+            {/* Search */}
+            <div className="hidden items-center gap-2 rounded-xl bg-gray-100 px-4 py-2.5 md:flex">
+              <Search
+                size={18}
+                className="text-gray-400"
+              />
+
+              <input
+                type="text"
+                placeholder="Search..."
+                className="w-64 bg-transparent text-sm outline-none placeholder:text-gray-400"
+              />
             </div>
           </div>
 
-          <div className="flex items-center gap-6">
-            <button className="relative text-gray-400 hover:text-gray-600">
-               <Bell className="w-6 h-6" />
-               <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+          {/* Header Right */}
+          <div className="flex items-center gap-4">
+            {/* Notifications */}
+            <Link
+              href="/admin/notifications"
+              className="relative flex h-10 w-10 items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100"
+            >
+              <Bell size={19} />
+
+              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
+            </Link>
+
+            {/* User */}
+            <Link
+              href="/admin/account"
+              className="flex items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-gray-100"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1e2338] text-white">
+                <User size={18} />
+              </div>
+
+              <div className="hidden text-left md:block">
+                <p className="text-sm font-semibold text-[#1e2338]">
+                  {user?.name || "Admin"}
+                </p>
+
+                <p className="text-xs text-gray-500">
+                  {user?.email || ""}
+                </p>
+              </div>
+            </Link>
+
+            {/* Logout */}
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-gray-500 hover:bg-red-50 hover:text-red-500"
+              title="Logout"
+            >
+              <LogOut size={19} />
             </button>
-            <AdminProfileDisplay user={user} onLogout={logout} />
           </div>
         </header>
 
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-6 bg-[#FDF8F5]">
+        {/* ================= PAGE CONTENT ================= */}
+        <main className="min-h-[calc(100vh-80px)] p-6">
           {children}
         </main>
       </div>
-
-    </div>
-  );
-}
-
-function AdminProfileDisplay({ user, onLogout }) {
-  const displayUser = user || { name: "Admin User", role: "ADMIN" };
-
-  return (
-    <div className="flex items-center gap-3 border-l border-gray-200 pl-6">
-       <div className="text-right hidden sm:block">
-          <p className="text-sm font-bold text-[#1e2338]">{displayUser.name}</p>
-          <p className="text-xs text-gray-500 font-medium uppercase">{displayUser.role || 'Admin'}</p>
-       </div>
-       <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200">
-          <img src="https://i.pravatar.cc/80?u=admin" alt="Admin" className="w-full h-full object-cover" />
-       </div>
-       <button
-         onClick={onLogout}
-         title="Logout"
-         className="text-gray-400 hover:text-red-500 transition-colors ml-1"
-       >
-         <LogOut className="w-5 h-5" />
-       </button>
     </div>
   );
 }
