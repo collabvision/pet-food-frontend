@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
@@ -43,34 +43,45 @@ export default function AdminLayout({ children }) {
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  const redirecting = useRef(false);
+
   /*
-   * ONLY the admin login page should bypass
-   * the admin authentication check.
+   * Only the admin login page is public.
    *
-   * Do NOT bypass /admin/account.
+   * Every other /admin/* route requires:
+   * - authenticated user
+   * - ADMIN role
    */
   const isLoginPage = pathname === "/admin/login";
 
   /*
    * Protect every admin page except /admin/login.
    */
-  useEffect(() => {
-    if (isLoginPage) return;
+useEffect(() => {
+  if (isLoginPage) return;
 
-    // Wait until AuthProvider finishes checking auth
-    if (status === "loading") return;
+  // Wait until authentication is completely initialized
+  if (status === "loading") return;
 
-    // User is not logged in OR user is not an admin
-    if (status === "guest" || !isAdmin) {
-      router.replace("/admin/login");
-    }
-  }, [status, isAdmin, router, isLoginPage]);
+  // Authenticated admin → allow access
+  if (status === "authenticated" && isAdmin) {
+    redirecting.current = false;
+    return;
+  }
 
+  // Anything else → login
+  if (status !== "authenticated" || !isAdmin) {
+    if (redirecting.current) return;
+
+    redirecting.current = true;
+    router.replace("/admin/login");
+  }
+}, [status, isAdmin, router, isLoginPage]);
   /*
    * Admin login page does not need:
    * - sidebar
    * - admin header
-   * - admin authentication guard
+   * - authentication guard
    */
   if (isLoginPage) {
     return <>{children}</>;
@@ -78,7 +89,7 @@ export default function AdminLayout({ children }) {
 
   /*
    * While authentication is being checked,
-   * show loading screen.
+   * don't render the admin application.
    */
   if (status === "loading") {
     return (
@@ -115,11 +126,11 @@ export default function AdminLayout({ children }) {
   }
 
   /*
-   * If the user is not admin, don't render
-   * the admin UI while redirecting.
+   * If user is not an admin,
+   * don't render the admin UI while redirecting.
    */
-  if (status === "guest" || !isAdmin) {
-    return (
+if (status !== "authenticated" || !isAdmin) {
+      return (
       <div
         style={{
           minHeight: "100vh",
@@ -247,6 +258,7 @@ export default function AdminLayout({ children }) {
     try {
       await logout();
     } finally {
+      redirecting.current = false;
       router.replace("/admin/login");
     }
   };
@@ -254,12 +266,14 @@ export default function AdminLayout({ children }) {
   return (
     <div className="min-h-screen bg-[#FDF8F5] text-[#1e2338]">
       {/* ================= SIDEBAR ================= */}
+
       <aside
         className={`fixed left-0 top-0 z-50 h-screen border-r border-gray-200 bg-white transition-all duration-300 ${
           sidebarOpen ? "w-64" : "w-20"
         }`}
       >
         {/* Logo */}
+
         <div className="flex h-20 items-center justify-between border-b border-gray-100 px-4">
           {sidebarOpen ? (
             <Link
@@ -295,6 +309,7 @@ export default function AdminLayout({ children }) {
         </div>
 
         {/* Sidebar Menu */}
+
         <div className="h-[calc(100vh-80px)] overflow-y-auto px-3 py-5">
           <nav className="space-y-1">
             {menuItems.map((item) => {
@@ -325,6 +340,7 @@ export default function AdminLayout({ children }) {
           </nav>
 
           {/* Help Card */}
+
           {sidebarOpen && (
             <div className="mt-8 rounded-2xl bg-[#eef2ff] p-4">
               <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-white">
@@ -354,15 +370,18 @@ export default function AdminLayout({ children }) {
       </aside>
 
       {/* ================= MAIN AREA ================= */}
+
       <div
         className={`transition-all duration-300 ${
           sidebarOpen ? "ml-64" : "ml-20"
         }`}
       >
         {/* ================= HEADER ================= */}
+
         <header className="sticky top-0 z-40 flex h-20 items-center justify-between border-b border-gray-200 bg-white/95 px-6 backdrop-blur">
           <div className="flex items-center gap-4">
             {/* Sidebar Toggle */}
+
             <button
               type="button"
               onClick={() =>
@@ -379,6 +398,7 @@ export default function AdminLayout({ children }) {
             </button>
 
             {/* Search */}
+
             <div className="hidden items-center gap-2 rounded-xl bg-gray-100 px-4 py-2.5 md:flex">
               <Search
                 size={18}
@@ -394,8 +414,10 @@ export default function AdminLayout({ children }) {
           </div>
 
           {/* Header Right */}
+
           <div className="flex items-center gap-4">
             {/* Notifications */}
+
             <Link
               href="/admin/notifications"
               className="relative flex h-10 w-10 items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100"
@@ -406,6 +428,7 @@ export default function AdminLayout({ children }) {
             </Link>
 
             {/* User */}
+
             <Link
               href="/admin/account"
               className="flex items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-gray-100"
@@ -426,6 +449,7 @@ export default function AdminLayout({ children }) {
             </Link>
 
             {/* Logout */}
+
             <button
               type="button"
               onClick={handleLogout}
@@ -438,6 +462,7 @@ export default function AdminLayout({ children }) {
         </header>
 
         {/* ================= PAGE CONTENT ================= */}
+
         <main className="min-h-[calc(100vh-80px)] p-6">
           {children}
         </main>

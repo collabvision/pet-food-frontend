@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { ApiError } from '@/lib/api';
-
+import { useRouter } from 'next/navigation';
 import {
   PawPrint,
   Heart,
@@ -34,6 +34,7 @@ export default function LoginPage() {
     resetPassword,
     status,
     isAdmin,
+    logout,
   } = useAuth();
 
   /*
@@ -46,7 +47,7 @@ export default function LoginPage() {
    * reset
    */
   const [mode, setMode] = useState('login');
-
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
 
@@ -109,15 +110,20 @@ export default function LoginPage() {
   /*
    * Already authenticated
    */
+  // useEffect(() => {
+  //   if (status !== 'authenticated') return;
+
+  //   if (isAdmin) {
+  //      window.location.replace('/admin');
+  //   } 
+  // }, [status, isAdmin]);
   useEffect(() => {
-    if (status !== 'authenticated') return;
+    if (status !== "authenticated") return;
 
     if (isAdmin) {
-      window.location.replace('/admin');
-    } else {
-      window.location.replace('/');
+      router.replace("/admin");
     }
-  }, [status, isAdmin]);
+  }, [status, isAdmin, router]);
 
   function clearMessages() {
     setError('');
@@ -136,61 +142,84 @@ export default function LoginPage() {
     }
   }
 
-async function handleLogin(e) {
-  e.preventDefault();
+  async function handleLogin(e) {
+    e.preventDefault();
 
-  clearMessages();
+    clearMessages();
 
-  if (!email.trim()) {
-    setError('Please enter your admin email.');
-    return;
-  }
-
-  if (!password) {
-    setError('Please enter your password.');
-    return;
-  }
-
-  setSubmitting(true);
-
-  try {
-    const user = await login({
-      email: email.trim(),
-      password,
-    });
-
-    console.log('Admin login user:', user);
-    console.log('Admin login role:', user?.role);
-
-    if (!user) {
-      setError('Login failed. Please try again.');
+    if (!email.trim()) {
+      setError("Please enter your admin email.");
       return;
     }
 
-    if (user.role !== 'ADMIN') {
-      setError(
-        'Access denied. This account does not have administrator access.'
-      );
-
-      await logout?.();
-
+    if (!password) {
+      setError("Please enter your password.");
       return;
     }
 
-    window.location.replace('/admin');
+    setSubmitting(true);
 
-  } catch (err) {
-    if (err instanceof ApiError) {
-      setError(
-        err.message || 'Invalid admin credentials.'
-      );
-    } else {
-      setError('Unable to sign in. Please try again.');
+    try {
+      const loggedInUser = await login({
+        email: email.trim(),
+        password,
+      });
+
+      console.log("=================================");
+      console.log("ADMIN LOGIN USER:", loggedInUser);
+      console.log("ADMIN LOGIN ROLE:", loggedInUser?.role);
+      console.log("=================================");
+
+      if (!loggedInUser) {
+        setError("Login failed. Please try again.");
+        return;
+      }
+
+      /*
+       * ADMIN LOGIN ONLY
+       */
+
+      if (loggedInUser.role !== "ADMIN") {
+        setError(
+          "Access denied. This account does not have administrator access."
+        );
+
+        await logout();
+
+        return;
+      }
+      /*
+       * Admin authenticated successfully
+       */
+
+      console.log("BEFORE ADMIN REDIRECT");
+      console.log("loggedInUser:", loggedInUser);
+      console.log("role:", loggedInUser?.role);
+      console.log("current URL:", window.location.href);
+
+      console.log("BEFORE REDIRECT TO ADMIN");
+
+      // setTimeout(() => {
+        console.log("REDIRECTING NOW");
+      router.push("/admin");
+      // }, 30000);
+
+    } catch (err) {
+      console.error("Admin login error:", err);
+
+      if (err instanceof ApiError) {
+        setError(
+          err.message || "Invalid admin credentials."
+        );
+      } else {
+        setError(
+          "Unable to sign in. Please try again."
+        );
+      }
+    } finally {
+      setSubmitting(false);
     }
-  } finally {
-    setSubmitting(false);
   }
-}
 
   async function handleRegister(e) {
     e.preventDefault();
