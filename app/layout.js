@@ -32,7 +32,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className="font-body antialiased">
         <AuthProvider>
-          <TopBar />
+          {/* <TopBar /> */}
           <SiteHeader />
           <main>{children}</main>
           <SiteFooter />
