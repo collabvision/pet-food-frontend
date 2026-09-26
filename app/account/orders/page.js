@@ -4,10 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Package, FileText, RefreshCcw, Heart, Bell, Settings, ArrowRight,
-  Search, ChevronDown, ChevronLeft, ChevronRight, X, Check,
-  Truck, ShieldCheck, Headphones, MapPin, LogOut, LayoutDashboard,
-  CreditCard, PawPrint
+  Package, FileText, RefreshCcw, Heart, Bell, ArrowRight,
+  Search, X, Check, Truck, Headphones
 } from "lucide-react";
 import { orderService, returnService } from "@/lib/services";
 
@@ -44,18 +42,7 @@ function formatShortDate(date) {
   return date.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
 
-/* ─── Sidebar links ────────────────────────────────────── */
-const SIDEBAR_LINKS = [
-  { name: "Dashboard",            icon: LayoutDashboard, href: "/account" },
-  { name: "My Orders",            icon: Package,         href: "/account/orders", active: true },
-  { name: "My Prescriptions",     icon: FileText,        href: "/account/prescriptions" },
-  { name: "My Addresses",         icon: MapPin,          href: "/account/addresses" },
-  { name: "My Pets",              icon: PawPrint,        href: "/account/pets" },
-  { name: "Wishlist",             icon: Heart,           href: "/account/wishlist" },
-  { name: "Payments & Refunds",   icon: CreditCard,      href: "/account/payments" },
-  { name: "Notifications",        icon: Bell,            href: "/account/notifications" },
-  { name: "Account Settings",     icon: Settings,        href: "/account/settings" },
-];
+
 
 /* ─── Filter tabs ──────────────────────────────────────── */
 const FILTER_TABS = [
@@ -199,11 +186,10 @@ export default function MyOrdersPage() {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8">
-      {/* ──── MAIN CONTENT ──── */}
-      <div className="flex-1 min-w-0">
+    <>
+      <div>
         {/* Header */}
-          <div className="mb-6">
+        <div className="mb-6">
             <h1 className="text-4xl font-black text-[#142653] mb-1 flex items-center gap-3">
               My Orders <Heart className="w-7 h-7 text-coral fill-coral" />
             </h1>
@@ -440,43 +426,7 @@ export default function MyOrdersPage() {
               Showing 1–{filteredOrders.length} of {filteredOrders.length} orders
             </div>
           )}
-        </div>
-
-        {/* ──── RIGHT SIDEBAR (promo cards) ──── */}
-        <aside className="hidden xl:flex flex-col w-[260px] flex-shrink-0 gap-6">
-          {/* Need Help */}
-          <div className="bg-white rounded-3xl p-5 shadow-sm border border-orange-50">
-            <div className="flex items-center gap-2 mb-2">
-              <Headphones className="w-5 h-5 text-[#142653]" />
-              <h4 className="font-bold text-[#142653]">Need Help With Your Order?</h4>
-            </div>
-            <p className="text-xs text-[#142653]/50 mb-3">Our support team is here to help you 24/7.</p>
-            <button className="w-full bg-[#142653] text-white py-2.5 rounded-xl text-sm font-bold hover:bg-[#142653]/90 transition-all flex items-center justify-center gap-2">
-              Contact Support <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Easy Reordering */}
-          <div className="bg-gradient-to-br from-coral/10 to-orange-50 rounded-3xl p-5 shadow-sm border border-orange-50 relative overflow-hidden">
-            <h4 className="font-bold text-[#142653] mb-1">Easy Reordering</h4>
-            <p className="text-xs text-[#142653]/60 mb-3">Loved a product?<br/>Reorder in just one click!</p>
-            <Link href="/products" className="bg-coral text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-orange-500 transition-all inline-flex items-center gap-1">
-              View All Products <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
-
-          {/* Track in Real Time */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-5 shadow-sm border border-blue-100 relative overflow-hidden">
-            <div className="flex items-center gap-2 mb-2">
-              <Truck className="w-5 h-5 text-[#142653]" />
-              <h4 className="font-bold text-[#142653]">Track in Real Time</h4>
-            </div>
-            <p className="text-xs text-[#142653]/60 mb-3">Get live updates on your order status.</p>
-            <button className="bg-[#142653] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#142653]/90 transition-all flex items-center gap-1">
-              Track Your Orders <ArrowRight className="w-3 h-3" />
-            </button>
-          </div>
-        </aside>
+      </div>
 
       {/* ══════════════ CANCEL MODAL ══════════════ */}
       {cancelModal.open && (
@@ -635,6 +585,6 @@ export default function MyOrdersPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
