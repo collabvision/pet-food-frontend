@@ -9,7 +9,6 @@ import {
   Truck, ShieldCheck, Headphones, MapPin, LogOut, LayoutDashboard,
   CreditCard, PawPrint
 } from "lucide-react";
-import { useAuth } from "@/lib/auth-context";
 import { orderService, returnService } from "@/lib/services";
 
 /* ─── Status helpers ───────────────────────────────────── */
@@ -70,7 +69,6 @@ const FILTER_TABS = [
 /* ─── Main Component ──────────────────────────────────── */
 export default function MyOrdersPage() {
   const router = useRouter();
-  const { user, status: authStatus, logout } = useAuth();
 
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -100,9 +98,8 @@ export default function MyOrdersPage() {
   }, []);
 
   useEffect(() => {
-    if (authStatus === "authenticated") fetchOrders();
-    if (authStatus === "guest") router.push("/login");
-  }, [authStatus, fetchOrders, router]);
+    fetchOrders();
+  }, [fetchOrders]);
 
   /* ─── Filtering & sorting ─── */
   const filteredOrders = orders
@@ -193,77 +190,19 @@ export default function MyOrdersPage() {
   const canCancel = (status) => ["PENDING", "CONFIRMED", "PROCESSING"].includes(status);
   const canReturn = (status) => status === "DELIVERED";
 
-  if (isLoading || authStatus === "loading") {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#FFF8F5] flex justify-center items-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-[#142653]"></div>
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-[#142653]"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#FFF8F5] font-sans">
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex gap-8">
-
-        {/* ──── SIDEBAR ──── */}
-        <aside className="hidden lg:flex flex-col w-[260px] flex-shrink-0">
-          {/* User Card */}
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-orange-50 mb-6 text-center">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-coral to-orange-400 mx-auto mb-3 flex items-center justify-center text-white text-2xl font-black shadow-lg">
-              {user?.name?.[0]?.toUpperCase() || "R"}
-            </div>
-            <h3 className="font-bold text-[#142653] text-lg">{user?.name || "User"}</h3>
-            <p className="text-xs text-[#142653]/50 mb-3">{user?.email}</p>
-            <Link href="/account" className="text-xs font-bold text-coral hover:underline flex items-center justify-center gap-1">
-              View Profile <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
-
-          {/* Nav Links */}
-          <nav className="space-y-1">
-            {SIDEBAR_LINKS.map((link) => {
-              const Icon = link.icon;
-              return (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                    link.active
-                      ? "bg-[#142653] text-white shadow-md"
-                      : "text-[#142653]/70 hover:bg-white hover:text-[#142653] hover:shadow-sm"
-                  }`}
-                >
-                  <Icon className="w-[18px] h-[18px]" />
-                  {link.name}
-                </Link>
-              );
-            })}
-            <button
-              onClick={logout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-red-500 hover:bg-red-50 transition-all mt-4"
-            >
-              <LogOut className="w-[18px] h-[18px]" />
-              Logout
-            </button>
-          </nav>
-
-          {/* Pet Banner */}
-          <div className="mt-6 rounded-3xl overflow-hidden relative">
-            <img
-              src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=400&q=80"
-              alt="Happy pets"
-              className="w-full h-[200px] object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#142653] to-transparent" />
-            <div className="absolute bottom-4 left-4 right-4">
-              <p className="text-white font-black text-lg leading-tight">Pets make<br/>a better<br/>life! <Heart className="inline w-4 h-4 text-coral fill-coral" /></p>
-            </div>
-          </div>
-        </aside>
-
-        {/* ──── MAIN CONTENT ──── */}
-        <main className="flex-1 min-w-0">
-          {/* Header */}
+    <div className="flex flex-col lg:flex-row gap-8">
+      {/* ──── MAIN CONTENT ──── */}
+      <div className="flex-1 min-w-0">
+        {/* Header */}
           <div className="mb-6">
             <h1 className="text-4xl font-black text-[#142653] mb-1 flex items-center gap-3">
               My Orders <Heart className="w-7 h-7 text-coral fill-coral" />
@@ -501,7 +440,7 @@ export default function MyOrdersPage() {
               Showing 1–{filteredOrders.length} of {filteredOrders.length} orders
             </div>
           )}
-        </main>
+        </div>
 
         {/* ──── RIGHT SIDEBAR (promo cards) ──── */}
         <aside className="hidden xl:flex flex-col w-[260px] flex-shrink-0 gap-6">
@@ -538,7 +477,6 @@ export default function MyOrdersPage() {
             </button>
           </div>
         </aside>
-      </div>
 
       {/* ══════════════ CANCEL MODAL ══════════════ */}
       {cancelModal.open && (
