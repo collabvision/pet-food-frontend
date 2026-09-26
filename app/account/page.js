@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { 
-  User, MapPin, Package, FileText, RefreshCcw, Heart, Bell, Settings, ArrowRight, MapPinned
+  User, MapPin, Package, FileText, RefreshCcw, Heart, Bell, Settings, ArrowRight, MapPinned, Truck
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { orderService } from "@/lib/services";
@@ -63,20 +63,9 @@ export default function AccountPage() {
   ];
 
   const quickActions = [
-    { name: "Manage Addresses", icon: <MapPin className="w-6 h-6 text-[#0F5132]" /> },
-    { name: "Upload Prescription", icon: <FileText className="w-6 h-6 text-[#0F5132]" /> },
-    { name: "Track Orders", icon: <Truck className="w-6 h-6 text-[#0F5132]" /> },
-    { name: "View Wishlist", icon: <Heart className="w-6 h-6 text-[#0F5132]" /> },
-  ];
-
-  // Helper function because Truck isn't imported from lucide-react in the top list, let's fix that inline
-  const TruckIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-[#0F5132]"><path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11"/><path d="M14 9h4l4 4v5c0 .6-.4 1-1 1h-2"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>;
-  
-  // Re-define quick actions with custom icon to avoid import error
-  const quickActionsFixed = [
     { name: "Manage Addresses", icon: <MapPinned className="w-6 h-6 text-[#0F5132]" /> },
     { name: "Upload Prescription", icon: <FileText className="w-6 h-6 text-[#0F5132]" /> },
-    { name: "Track Orders", icon: <TruckIcon /> },
+    { name: "Track Orders", icon: <Truck className="w-6 h-6 text-[#0F5132]" /> },
     { name: "View Wishlist", icon: <Heart className="w-6 h-6 text-[#0F5132]" /> },
   ];
 
@@ -184,7 +173,7 @@ export default function AccountPage() {
 
           {/* Quick Actions Footer */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-             {quickActionsFixed.map((action, idx) => (
+             {quickActions.map((action, idx) => (
                 <button key={idx} className="bg-white rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100 hover:shadow-md transition-shadow gap-3 hover:-translate-y-1 transform duration-200">
                    {action.icon}
                    <span className="font-bold text-[#1e2338] text-sm">{action.name}</span>
