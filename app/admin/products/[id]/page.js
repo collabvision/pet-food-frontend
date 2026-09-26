@@ -16,7 +16,6 @@ export default function EditProductPage() {
 
     const [form, setForm] = useState({
         name: '',
-        slug: '',
         category: '',
         description: '',
         price: '',
@@ -61,7 +60,6 @@ export default function EditProductPage() {
             if (product) {
                 setForm({
                     name: product.name || '',
-                    slug: product.slug || '',
                     category:
                         product.category?._id ||
                         product.category?.id ||
@@ -147,11 +145,6 @@ export default function EditProductPage() {
                         required
                     />
 
-                    <Input
-                        label="Slug"
-                        value={form.slug}
-                        onChange={(e) => updateField('slug', e.target.value)}
-                    />
 
                     <div>
                         <label className="mb-2 block text-sm text-zinc-300">

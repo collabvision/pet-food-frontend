@@ -1,5 +1,5 @@
 import Link from "next/link";
-
+import HomeProductCard from "@/components/HomeProductCard";
 import {
   Heart,
   ShoppingCart,
@@ -701,7 +701,7 @@ function FeaturedProducts({ products = [] }) {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
 
           {products.slice(0, 6).map((product) => (
-            <ProductCard
+            <HomeProductCard
               key={product._id}
               product={product}
             />
@@ -729,118 +729,7 @@ function FeaturedProducts({ products = [] }) {
 }
 
 
-/* =========================================================
-   PRODUCT CARD
-   ========================================================= */
 
-function ProductCard({ product }) {
-
-  const image =
-    product.image ||
-    product.images?.[0] ||
-    product.thumbnail ||
-    images.food;
-
-  const name =
-    product.name ||
-    product.title ||
-    "Pet Product";
-
-  const price =
-    product.price ??
-    product.salePrice ??
-    0;
-
-  const originalPrice =
-    product.originalPrice ??
-    product.compareAtPrice ??
-    null;
-
-  const rating =
-    product.rating ||
-    4.8;
-
-  return (
-    <Link
-      href={`/products/${product.slug || product._id}`}
-      className="group overflow-hidden rounded-[16px] bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-    >
-
-      <div className="relative aspect-square bg-[#fffdfb] p-3">
-
-        <button
-          type="button"
-          onClick={(event) => event.preventDefault()}
-          className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm"
-        >
-          <Heart size={15} />
-        </button>
-
-        <img
-          src={image}
-          alt={name}
-          className="h-full w-full object-contain transition duration-300 group-hover:scale-105"
-        />
-
-      </div>
-
-
-      <div className="p-3">
-
-        <h3 className="line-clamp-2 min-h-[34px] text-[11px] font-semibold leading-4 sm:text-xs">
-          {name}
-        </h3>
-
-
-        <div className="mt-1 flex items-center gap-1">
-
-          <div className="flex text-[#f5a623]">
-
-            {Array.from({ length: 5 }).map((_, index) => (
-              <Star
-                key={index}
-                size={10}
-                fill="currentColor"
-              />
-            ))}
-
-          </div>
-
-          <span className="text-[9px] text-[#142653]/50">
-            {rating}
-          </span>
-
-        </div>
-
-
-        <div className="mt-2 flex items-center gap-2">
-
-          <span className="text-sm font-bold">
-            ₹{Number(price).toLocaleString("en-IN")}
-          </span>
-
-          {originalPrice && (
-            <span className="text-[10px] text-gray-400 line-through">
-              ₹{Number(originalPrice).toLocaleString("en-IN")}
-            </span>
-          )}
-
-        </div>
-
-
-        <button
-          type="button"
-          onClick={(event) => event.preventDefault()}
-          className="mt-3 w-full rounded-md bg-[#ffe6df] py-2 text-[10px] font-bold text-[#d94e3b] hover:bg-[#ffcec2]"
-        >
-          Add to Cart
-        </button>
-
-      </div>
-
-    </Link>
-  );
-}
 
 
 /* =========================================================

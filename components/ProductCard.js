@@ -3,6 +3,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { IconHeart } from './Icons';
+import { useStore } from '../store/useStore';
+import { useState } from 'react';
 
 const BADGE_STYLES = {
   '20% OFF': 'bg-coral text-white',
@@ -13,7 +15,27 @@ const BADGE_STYLES = {
 };
 
 export default function ProductCard({ product }) {
-  const { name, slug, price, compareAtPrice, rating, reviewCount, image, badge } = product;
+  const { name, slug, price, compareAtPrice, rating, reviewCount, badge } = product;
+  const image = product.image || product.images?.[0]?.url || product.images?.[0]?.localUrl || product.images?.[0] || product.thumbnail;
+  const { addToCart } = useStore();
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
+
+  const handleAddToCart = async (e) => {
+    e.preventDefault();
+    if (!product || !product._id) return;
+    try {
+      setAddingToCart(true);
+      await addToCart(product._id, 1);
+      setAddedToCart(true);
+      setTimeout(() => setAddedToCart(false), 2000);
+    } catch (error) {
+      console.error(error);
+      alert(error?.response?.data?.message || error?.message || 'Failed to add item to cart');
+    } finally {
+      setAddingToCart(false);
+    }
+  };
 
   return (
     <div className="group relative flex flex-col rounded-2xl border border-navy/8 bg-white p-4 transition-shadow hover:shadow-lg">
@@ -31,7 +53,7 @@ export default function ProductCard({ product }) {
 
       <Link href={`/products/${slug}`} className="relative mb-4 block aspect-square overflow-hidden rounded-xl bg-sand">
         {image ? (
-          <Image src={image} alt={name} fill sizes="240px" className="object-cover transition-transform group-hover:scale-105" />
+          <Image src={typeof image === "string" ? image : image?.url} alt={name} fill sizes="240px" className="object-cover transition-transform group-hover:scale-105" />
         ) : (
           <div className="flex h-full items-center justify-center text-4xl" aria-hidden>🐾</div>
         )}
@@ -54,7 +76,13 @@ export default function ProductCard({ product }) {
         )}
       </div>
 
-      <button className="btn-primary mt-3 w-full py-2 text-xs">Add to Cart</button>
+      <button 
+        onClick={handleAddToCart}
+        disabled={addingToCart}
+        className={`mt-3 w-full py-2 text-xs rounded-xl shadow-lg font-bold transition-all ${addedToCart ? 'bg-green-600 text-white' : 'btn-primary'}`}
+      >
+        {addingToCart ? "Adding..." : addedToCart ? "Added ✓" : "Add to Cart"}
+      </button>
     </div>
   );
 }

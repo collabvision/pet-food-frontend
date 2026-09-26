@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Star, Minus, Plus, Heart, Share2, Check, Shield, ArrowLeft } from "lucide-react";
-import { productService, cartService } from "@/lib/services";
+import { productService } from "@/lib/services";
+import { useStore } from "@/store/useStore";
 import Link from "next/link";
 
 export default function ProductDetailsPage() {
@@ -18,6 +19,7 @@ export default function ProductDetailsPage() {
   const [selectedImage, setSelectedImage] = useState("");
   const [addingToCart, setAddingToCart] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
+  const { addToCart } = useStore();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -42,7 +44,7 @@ export default function ProductDetailsPage() {
     if (!product) return;
     try {
       setAddingToCart(true);
-      await cartService.addItem(product._id, quantity);
+      await addToCart(product._id, quantity);
       setAddedToCart(true);
       setTimeout(() => setAddedToCart(false), 2000);
     } catch (error) {
@@ -218,9 +220,10 @@ export default function ProductDetailsPage() {
           <div className="flex gap-4 mt-auto">
             <button 
               onClick={handleAddToCart}
-              className="flex-1 bg-blue-900 hover:bg-blue-800 text-white font-semibold py-4 rounded-xl shadow-lg transition-all active:scale-95"
+              disabled={addingToCart}
+              className={`flex-1 font-semibold py-4 rounded-xl shadow-lg transition-all active:scale-95 ${addedToCart ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-blue-900 hover:bg-blue-800 text-white'}`}
             >
-              Add to Cart
+              {addingToCart ? "Adding..." : addedToCart ? "Added to Cart ✓" : "Add to Cart"}
             </button>
             <button 
               onClick={handleBuyNow}

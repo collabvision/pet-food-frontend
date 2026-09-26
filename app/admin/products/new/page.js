@@ -15,7 +15,6 @@ export default function NewProductPage() {
 
     const [form, setForm] = useState({
         name: "",
-        slug: "",
         description: "",
         category: "",
         price: "",
@@ -61,7 +60,35 @@ export default function NewProductPage() {
                     formData.append(key, value);
                 });
 
-                images.forEach((file) => {
+                const convertToWebP = (file) => {
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const img = new window.Image();
+                            img.onload = () => {
+                                const canvas = document.createElement("canvas");
+                                canvas.width = img.width;
+                                canvas.height = img.height;
+                                const ctx = canvas.getContext("2d");
+                                ctx.drawImage(img, 0, 0);
+                                canvas.toBlob((blob) => {
+                                    const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", {
+                                        type: "image/webp",
+                                    });
+                                    resolve(newFile);
+                                }, "image/webp", 0.8);
+                            };
+                            img.onerror = reject;
+                            img.src = e.target.result;
+                        };
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                    });
+                };
+
+                const webpImages = await Promise.all(images.map(convertToWebP));
+
+                webpImages.forEach((file) => {
                     formData.append("images", file);
                 });
 
@@ -109,13 +136,6 @@ export default function NewProductPage() {
                                 className="input"
                             />
 
-                            <input
-                                required
-                                value={form.slug}
-                                onChange={(e) => update("slug", e.target.value)}
-                                placeholder="product-slug"
-                                className="input"
-                            />
 
                             <textarea
                                 required
