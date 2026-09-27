@@ -2,11 +2,33 @@
 
 import { useState } from "react";
 import {
-  User, Mail, Phone, ShieldCheck, Lock, Bell, Trash2,
-  Edit3, Camera, Plus, MapPin, PawPrint, ChevronRight,
-  Check, X, Eye, EyeOff, MoreHorizontal, Save, Loader2,
-  AlertTriangle, ToggleLeft, ToggleRight, Calendar, UserCheck,
-  Home, Briefcase
+  User,
+  Mail,
+  Phone,
+  ShieldCheck,
+  Lock,
+  Bell,
+  Trash2,
+  Edit3,
+  Camera,
+  Plus,
+  MapPin,
+  PawPrint,
+  ChevronRight,
+  Check,
+  X,
+  Eye,
+  EyeOff,
+  MoreHorizontal,
+  Save,
+  Loader2,
+  AlertTriangle,
+  ToggleLeft,
+  ToggleRight,
+  Calendar,
+  UserCheck,
+  Home,
+  Briefcase,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { authService } from "@/lib/services";
@@ -39,7 +61,9 @@ function SectionHeader({ icon, title, subtitle, action }) {
         </div>
         <div>
           <h3 className="font-black text-[#142653] text-base">{title}</h3>
-          <p className="text-xs text-[#142653]/50 font-medium mt-0.5">{subtitle}</p>
+          <p className="text-xs text-[#142653]/50 font-medium mt-0.5">
+            {subtitle}
+          </p>
         </div>
       </div>
       {action}
@@ -49,11 +73,69 @@ function SectionHeader({ icon, title, subtitle, action }) {
 
 export default function ProfilePage() {
   const { user, refreshUser } = useAuth();
-
   /* ── Change password state ── */
+
+  /* ─────────────────────────────────────
+     Personal Information
+  ───────────────────────────────────── */
+
+  const [profileOpen, setProfileOpen] = useState(false);
+
+  const [profileForm, setProfileForm] = useState({
+    name: "",
+    phone: "",
+  });
+
+  const [profileLoading, setProfileLoading] = useState(false);
+
+  /* ─────────────────────────────────────
+     Address
+  ───────────────────────────────────── */
+
+  const [addressOpen, setAddressOpen] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(null);
+  const [addressLoading, setAddressLoading] = useState(false);
+
+  const [addressForm, setAddressForm] = useState({
+    type: "Home",
+    name: "",
+    street: "",
+    city: "",
+    state: "",
+    pincode: "",
+    country: "India",
+    phone: "",
+    isDefault: false,
+  });
+
+  /* ─────────────────────────────────────
+     Pet
+  ───────────────────────────────────── */
+
+  const [petOpen, setPetOpen] = useState(false);
+  const [editingPet, setEditingPet] = useState(null);
+  const [petLoading, setPetLoading] = useState(false);
+
+  const [petForm, setPetForm] = useState({
+    name: "",
+    type: "Dog",
+    breed: "",
+    dateOfBirth: "",
+    gender: "Male",
+    weight: "",
+    weightUnit: "kg",
+  });
+
+  /* ─────────────────────────────────────
+     Change password state
+  ───────────────────────────────────── */
   const [pwOpen, setPwOpen] = useState(false);
   const [pw, setPw] = useState({ current: "", newPw: "", confirm: "" });
-  const [showPw, setShowPw] = useState({ current: false, newPw: false, confirm: false });
+  const [showPw, setShowPw] = useState({
+    current: false,
+    newPw: false,
+    confirm: false,
+  });
   const [pwLoading, setPwLoading] = useState(false);
   const [pwMsg, setPwMsg] = useState(null);
 
@@ -66,35 +148,63 @@ export default function ProfilePage() {
   });
 
   /* ── Sample addresses (no API yet) ── */
-  const [addresses] = useState([
-    {
-      id: "1", type: "Home", name: user?.name || "Riya Sharma",
-      line1: "A-101, Sunshine Apartments", line2: "123 Green Park, Near City Mall",
-      city: "Bangalore", state: "Karnataka", pincode: "560001",
-      isDefault: true,
-    },
-    {
-      id: "2", type: "Office", name: user?.name || "Riya Sharma",
-      line1: "2nd Floor, Tech Park Building", line2: "Outer Ring Road, Bellandur",
-      city: "Bangalore", state: "Karnataka", pincode: "560103",
-      isDefault: false,
-    },
-  ]);
+  /* ── Addresses from logged-in user ── */
+  const addresses = user?.addresses || [];
 
-  /* ── Sample pets (no API yet) ── */
-  const [pets] = useState([
-    { id: "1", name: "Bruno", type: "Dog", breed: "Golden Retriever", age: "2 Years", gender: "Male", weight: "28 kg", emoji: "🐶" },
-    { id: "2", name: "Luna", type: "Cat", breed: "Domestic Short Hair", age: "1 Year", gender: "Female", weight: "4 kg", emoji: "🐱" },
-  ]);
+  /* ── Pets from logged-in user ── */
+  const pets = user?.pets || [];
 
   /* ── Member since ── */
   const memberSince = user?.createdAt
-    ? new Date(user.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+    ? new Date(user.createdAt).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
     : "—";
 
   const initials = user?.name
-    ? user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+    ? user.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
     : "U";
+
+  /* ─────────────────────────────────────
+   Personal Information
+───────────────────────────────────── */
+
+  const handleOpenProfile = () => {
+    setProfileForm({
+      name: user?.name || "",
+      phone: user?.phone || "",
+    });
+
+    setProfileOpen(true);
+  };
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+
+    try {
+      setProfileLoading(true);
+
+      await authService.updateProfile({
+        name: profileForm.name,
+        phone: profileForm.phone,
+      });
+
+      await refreshUser();
+
+      setProfileOpen(false);
+    } catch (error) {
+      alert(error?.message || "Failed to update profile");
+    } finally {
+      setProfileLoading(false);
+    }
+  };
 
   /* ── Handle password change ── */
   const handleChangePw = async (e) => {
@@ -109,7 +219,10 @@ export default function ProfilePage() {
       return;
     }
     if (pw.newPw.length < 8) {
-      setPwMsg({ type: "error", text: "Password must be at least 8 characters." });
+      setPwMsg({
+        type: "error",
+        text: "Password must be at least 8 characters.",
+      });
       return;
     }
     try {
@@ -119,15 +232,191 @@ export default function ProfilePage() {
       setPw({ current: "", newPw: "", confirm: "" });
       setTimeout(() => setPwOpen(false), 1500);
     } catch (err) {
-      setPwMsg({ type: "error", text: err?.message || "Failed to update password." });
+      setPwMsg({
+        type: "error",
+        text: err?.message || "Failed to update password.",
+      });
     } finally {
       setPwLoading(false);
     }
   };
 
+  /* ─────────────────────────────────────
+   Pets
+───────────────────────────────────── */
+
+  const handleAddPet = () => {
+    if (pets.length >= 2) {
+      alert("You can add maximum 2 pets.");
+      return;
+    }
+
+    setEditingPet(null);
+
+    setPetForm({
+      name: "",
+      type: "Dog",
+      breed: "",
+      dateOfBirth: "",
+      gender: "Male",
+      weight: "",
+      weightUnit: "kg",
+    });
+
+    setPetOpen(true);
+  };
+
+  const handleEditPet = (pet) => {
+    setEditingPet(pet);
+
+    setPetForm({
+      name: pet.name || "",
+      type: pet.type || "Dog",
+      breed: pet.breed || "",
+      dateOfBirth: pet.dateOfBirth ? pet.dateOfBirth.substring(0, 10) : "",
+      gender: pet.gender || "Other",
+      weight: pet.weight || "",
+      weightUnit: pet.weightUnit || "kg",
+    });
+
+    setPetOpen(true);
+  };
+
+  const handleSavePet = async (e) => {
+    e.preventDefault();
+
+    try {
+      setPetLoading(true);
+
+      const data = {
+        ...petForm,
+        weight: petForm.weight ? Number(petForm.weight) : null,
+      };
+
+      if (editingPet) {
+        await authService.updatePet(editingPet._id, data);
+      } else {
+        await authService.addPet(data);
+      }
+
+      await refreshUser();
+
+      setPetOpen(false);
+      setEditingPet(null);
+    } catch (error) {
+      alert(error?.message || "Failed to save pet");
+    } finally {
+      setPetLoading(false);
+    }
+  };
+
+  const handleDeletePet = async (petId) => {
+    if (!window.confirm("Delete this pet?")) {
+      return;
+    }
+
+    try {
+      await authService.deletePet(petId);
+
+      await refreshUser();
+    } catch (error) {
+      alert(error?.message || "Failed to delete pet");
+    }
+  };
+  /* ─────────────────────────────────────
+   Address
+───────────────────────────────────── */
+
+  const handleAddAddress = () => {
+    if (addresses.length >= 2) {
+      alert("You can save maximum 2 addresses.");
+      return;
+    }
+
+    setEditingAddress(null);
+
+    setAddressForm({
+      type: "Home",
+      name: user?.name || "",
+      street: "",
+      city: "",
+      state: "",
+      pincode: "",
+      country: "India",
+      phone: user?.phone || "",
+      isDefault: addresses.length === 0,
+    });
+
+    setAddressOpen(true);
+  };
+
+  const handleEditAddress = (address) => {
+    setEditingAddress(address);
+
+    setAddressForm({
+      type: address.type || "Home",
+      name: address.name || "",
+      street: address.street || "",
+      city: address.city || "",
+      state: address.state || "",
+      pincode: address.pincode || "",
+      country: address.country || "India",
+      phone: address.phone || "",
+      isDefault: Boolean(address.isDefault),
+    });
+
+    setAddressOpen(true);
+  };
+
+  const handleSaveAddress = async (e) => {
+    e.preventDefault();
+
+    try {
+      setAddressLoading(true);
+
+      if (editingAddress) {
+        await authService.updateAddress(editingAddress._id, addressForm);
+      } else {
+        await authService.addAddress(addressForm);
+      }
+
+      await refreshUser();
+
+      setAddressOpen(false);
+      setEditingAddress(null);
+    } catch (error) {
+      alert(error?.message || "Failed to save address");
+    } finally {
+      setAddressLoading(false);
+    }
+  };
+
+  const handleDeleteAddress = async (addressId) => {
+    if (!window.confirm("Delete this address?")) {
+      return;
+    }
+
+    try {
+      await authService.deleteAddress(addressId);
+
+      await refreshUser();
+    } catch (error) {
+      alert(error?.message || "Failed to delete address");
+    }
+  };
+
+  const handleSetDefaultAddress = async (addressId) => {
+    try {
+      await authService.setDefaultAddress(addressId);
+
+      await refreshUser();
+    } catch (error) {
+      alert(error?.message || "Failed to set default address");
+    }
+  };
+
   return (
     <div className="space-y-6">
-
       {/* ── Banner ── */}
       <div className="relative bg-gradient-to-r from-blue-50 via-[#FFF0E8] to-emerald-50 rounded-3xl overflow-hidden border border-orange-50 shadow-sm">
         <div className="p-6 pr-48">
@@ -144,7 +433,9 @@ export default function ProfilePage() {
             🐕🐈
           </div>
           <div className="absolute bottom-3 right-3 bg-white/80 backdrop-blur-sm rounded-xl px-3 py-1.5 text-xs font-black text-[#142653] shadow-sm">
-            Good Pets<br />Brighter Days! ☀️
+            Good Pets
+            <br />
+            Brighter Days! ☀️
           </div>
         </div>
       </div>
@@ -152,7 +443,6 @@ export default function ProfilePage() {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* ════ LEFT 2/3 ════ */}
         <div className="lg:col-span-2 space-y-6">
-
           {/* ── Personal Information ── */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-orange-50">
             <SectionHeader
@@ -160,8 +450,13 @@ export default function ProfilePage() {
               title="Personal Information"
               subtitle="Keep your details updated for a seamless experience."
               action={
-                <button className="flex items-center gap-1.5 text-sm font-bold text-[#142653] border-2 border-gray-100 px-4 py-2 rounded-xl hover:border-coral hover:text-coral transition-all">
-                  <Edit3 className="w-3.5 h-3.5" /> Edit
+                <button
+                  type="button"
+                  onClick={handleOpenProfile}
+                  className="flex items-center gap-1.5 text-sm font-bold text-[#142653] border-2 border-gray-100 px-4 py-2 rounded-xl hover:border-coral hover:text-coral transition-all"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  Edit
                 </button>
               }
             />
@@ -180,7 +475,9 @@ export default function ProfilePage() {
               {/* Info grid */}
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-4">
-                  <h2 className="text-xl font-black text-[#142653]">{user?.name || "—"}</h2>
+                  <h2 className="text-xl font-black text-[#142653]">
+                    {user?.name || "—"}
+                  </h2>
                   <span className="bg-orange-100 text-orange-600 text-[10px] font-black px-2.5 py-1 rounded-full flex items-center gap-1">
                     🐾 Pet Parent
                   </span>
@@ -191,8 +488,12 @@ export default function ProfilePage() {
                   <div className="flex items-center gap-2.5 p-3 rounded-xl bg-gray-50">
                     <Mail className="w-4 h-4 text-[#142653]/40 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-black uppercase tracking-wider text-[#142653]/30 mb-0.5">Email</p>
-                      <p className="text-sm font-bold text-[#142653] truncate">{user?.email || "—"}</p>
+                      <p className="text-xs font-black uppercase tracking-wider text-[#142653]/30 mb-0.5">
+                        Email
+                      </p>
+                      <p className="text-sm font-bold text-[#142653] truncate">
+                        {user?.email || "—"}
+                      </p>
                     </div>
                     {user?.isEmailVerified && (
                       <span className="flex items-center gap-1 text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 flex-shrink-0">
@@ -205,8 +506,12 @@ export default function ProfilePage() {
                   <div className="flex items-center gap-2.5 p-3 rounded-xl bg-gray-50">
                     <Phone className="w-4 h-4 text-[#142653]/40 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-black uppercase tracking-wider text-[#142653]/30 mb-0.5">Phone</p>
-                      <p className="text-sm font-bold text-[#142653]">{user?.phone || "Not added"}</p>
+                      <p className="text-xs font-black uppercase tracking-wider text-[#142653]/30 mb-0.5">
+                        Phone
+                      </p>
+                      <p className="text-sm font-bold text-[#142653]">
+                        {user?.phone || "Not added"}
+                      </p>
                     </div>
                   </div>
 
@@ -214,8 +519,12 @@ export default function ProfilePage() {
                   <div className="flex items-center gap-2.5 p-3 rounded-xl bg-gray-50">
                     <UserCheck className="w-4 h-4 text-[#142653]/40 flex-shrink-0" />
                     <div>
-                      <p className="text-xs font-black uppercase tracking-wider text-[#142653]/30 mb-0.5">Member Since</p>
-                      <p className="text-sm font-bold text-[#142653]">{memberSince}</p>
+                      <p className="text-xs font-black uppercase tracking-wider text-[#142653]/30 mb-0.5">
+                        Member Since
+                      </p>
+                      <p className="text-sm font-bold text-[#142653]">
+                        {memberSince}
+                      </p>
                     </div>
                   </div>
 
@@ -223,8 +532,14 @@ export default function ProfilePage() {
                   <div className="flex items-center gap-2.5 p-3 rounded-xl bg-gray-50">
                     <ShieldCheck className="w-4 h-4 text-[#142653]/40 flex-shrink-0" />
                     <div>
-                      <p className="text-xs font-black uppercase tracking-wider text-[#142653]/30 mb-0.5">Account Type</p>
-                      <p className="text-sm font-bold text-[#142653]">{user?.role === "ADMIN" ? "Administrator" : "Standard User"}</p>
+                      <p className="text-xs font-black uppercase tracking-wider text-[#142653]/30 mb-0.5">
+                        Account Type
+                      </p>
+                      <p className="text-sm font-bold text-[#142653]">
+                        {user?.role === "ADMIN"
+                          ? "Administrator"
+                          : "Standard User"}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -239,46 +554,95 @@ export default function ProfilePage() {
               title="Saved Addresses"
               subtitle="Manage your delivery addresses."
               action={
-                <button className="flex items-center gap-1.5 text-sm font-bold text-[#142653] bg-gray-50 border border-gray-100 px-4 py-2 rounded-xl hover:bg-[#FFF0E8] hover:border-coral/30 transition-all">
-                  <Plus className="w-3.5 h-3.5" /> Add New Address
+                <button
+                  type="button"
+                  onClick={handleAddAddress}
+                  disabled={addresses.length >= 2}
+                  className={`flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-xl transition-all ${
+                    addresses.length >= 2
+                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                      : "text-[#142653] bg-gray-50 border border-gray-100 hover:bg-[#FFF0E8]"
+                  }`}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+
+                  {addresses.length >= 2
+                    ? "Maximum 2 Addresses"
+                    : "Add New Address"}
                 </button>
               }
             />
 
             <div className="grid sm:grid-cols-2 gap-4">
-              {addresses.map(addr => (
-                <div key={addr.id} className="border-2 border-gray-100 rounded-2xl p-4 hover:border-orange-200 transition-colors">
+              {addresses.map((addr) => (
+                <div
+                  key={addr._id}
+                  className="border-2 border-gray-100 rounded-2xl p-4 hover:border-orange-200 transition-colors"
+                >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-lg bg-[#FFF0E8] flex items-center justify-center">
-                        {addr.type === "Home"
-                          ? <Home className="w-3.5 h-3.5 text-coral" />
-                          : <Briefcase className="w-3.5 h-3.5 text-coral" />}
+                        {addr.type === "Home" ? (
+                          <Home className="w-3.5 h-3.5 text-coral" />
+                        ) : (
+                          <Briefcase className="w-3.5 h-3.5 text-coral" />
+                        )}
                       </div>
-                      <span className="font-black text-[#142653] text-sm">{addr.type}</span>
+                      <span className="font-black text-[#142653] text-sm">
+                        {addr.type}
+                      </span>
                     </div>
                     <button className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-50 transition-colors">
                       <MoreHorizontal className="w-4 h-4 text-[#142653]/40" />
                     </button>
                   </div>
-                  <p className="font-bold text-[#142653] text-sm">{addr.name}</p>
-                  <p className="text-xs text-[#142653]/60 font-medium mt-1">{addr.line1}</p>
-                  <p className="text-xs text-[#142653]/60 font-medium">{addr.line2}</p>
-                  <p className="text-xs text-[#142653]/60 font-medium">{addr.city}, {addr.state} – {addr.pincode}</p>
+                  <p className="font-bold text-[#142653] text-sm">
+                    {addr.name}
+                  </p>
+                  <p className="text-xs text-[#142653]/60 font-medium mt-1">
+                    {addr.street}
+                  </p>
+
+                  <p className="text-xs text-[#142653]/60 font-medium">
+                    {addr.city}, {addr.state} – {addr.pincode}
+                  </p>
+
+                  {addr.phone && (
+                    <p className="text-xs text-[#142653]/60 font-medium">
+                      {addr.phone}
+                    </p>
+                  )}
 
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
-                    {addr.isDefault
-                      ? <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 flex items-center gap-1">
-                          <Check className="w-2.5 h-2.5" /> Default Address
-                        </span>
-                      : <button className="text-[10px] font-bold text-[#142653]/50 hover:text-coral transition-colors">Set as Default</button>
-                    }
-                    <div className="flex gap-2">
-                      <button className="text-xs font-bold text-[#142653]/60 flex items-center gap-1 hover:text-[#142653] transition-colors">
-                        <Edit3 className="w-3 h-3" /> Edit
+                    {addr.isDefault ? (
+                      <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 flex items-center gap-1">
+                        <Check className="w-2.5 h-2.5" /> Default Address
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleSetDefaultAddress(addr._id)}
+                        className="text-[10px] font-bold text-[#142653]/50 hover:text-coral transition-colors"
+                      >
+                        Set as Default
                       </button>
-                      <button className="text-xs font-bold text-red-400 flex items-center gap-1 hover:text-red-600 transition-colors">
-                        <Trash2 className="w-3 h-3" /> Delete
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleEditAddress(addr)}
+                        className="text-xs font-bold text-[#142653]/60 flex items-center gap-1 hover:text-[#142653] transition-colors"
+                      >
+                        <Edit3 className="w-3 h-3" />
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteAddress(addr._id)}
+                        className="text-xs font-bold text-red-400 flex items-center gap-1 hover:text-red-600 transition-colors"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        Delete
                       </button>
                     </div>
                   </div>
@@ -294,42 +658,95 @@ export default function ProfilePage() {
               title="My Pets"
               subtitle="Manage your pet profiles for personalized recommendations."
               action={
-                <button className="flex items-center gap-1.5 text-sm font-bold text-[#142653] bg-gray-50 border border-gray-100 px-4 py-2 rounded-xl hover:bg-[#FFF0E8] hover:border-coral/30 transition-all">
-                  <Plus className="w-3.5 h-3.5" /> Add Pet
+                <button
+                  type="button"
+                  onClick={handleAddPet}
+                  disabled={pets.length >= 2}
+                  className="flex items-center gap-1.5 text-sm font-bold text-[#142653] bg-gray-50 border border-gray-100 px-4 py-2 rounded-xl hover:bg-[#FFF0E8] hover:border-coral/30 transition-all disabled:opacity-50"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+
+                  {pets.length >= 2 ? "Maximum 2 Pets" : "Add Pet"}
                 </button>
               }
             />
 
             <div className="grid sm:grid-cols-2 gap-4">
-              {pets.map(pet => (
-                <div key={pet.id} className="border-2 border-gray-100 rounded-2xl p-4 hover:border-orange-200 transition-colors cursor-pointer group">
+              {pets.map((pet) => (
+                <div
+                  key={pet._id}
+                  className="border-2 border-gray-100 rounded-2xl p-4 hover:border-orange-200 transition-colors group"
+                >
+                  {/* Pet Header */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
+                      {/* Pet Icon */}
                       <div className="w-12 h-12 rounded-xl bg-[#FFF0E8] flex items-center justify-center text-2xl flex-shrink-0">
-                        {pet.emoji}
+                        {pet.type === "Dog"
+                          ? "🐶"
+                          : pet.type === "Cat"
+                            ? "🐱"
+                            : pet.type === "Bird"
+                              ? "🐦"
+                              : "🐾"}
                       </div>
+
+                      {/* Pet Name */}
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className="font-black text-[#142653]">{pet.name}</p>
-                          <button className="opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Edit3 className="w-3 h-3 text-[#142653]/40" />
+                          <p className="font-black text-[#142653]">
+                            {pet.name}
+                          </p>
+
+                          {/* EDIT BUTTON */}
+                          <button
+                            type="button"
+                            onClick={() => handleEditPet(pet)}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[#FFF0E8] transition-colors"
+                            title="Edit pet"
+                          >
+                            <Edit3 className="w-3.5 h-3.5 text-[#142653]/50 hover:text-coral" />
                           </button>
                         </div>
-                        <p className="text-xs text-[#142653]/50 font-medium">{pet.type} · {pet.breed}</p>
+
+                        <p className="text-xs text-[#142653]/50 font-medium">
+                          {pet.type}
+                          {pet.breed ? ` · ${pet.breed}` : ""}
+                        </p>
                       </div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-[#142653]/20 group-hover:text-coral transition-colors" />
+
+                    {/* DELETE BUTTON */}
+                    <button
+                      type="button"
+                      onClick={() => handleDeletePet(pet._id)}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-50 transition-colors"
+                      title="Delete pet"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-400 hover:text-red-600" />
+                    </button>
                   </div>
+
+                  {/* Pet Details */}
                   <div className="flex gap-3 mt-3 pt-3 border-t border-gray-50">
-                    {[
-                      { icon: "🎂", label: pet.age },
-                      { icon: pet.gender === "Male" ? "♂️" : "♀️", label: pet.gender },
-                      { icon: "⚖️", label: pet.weight },
-                    ].map(d => (
-                      <div key={d.label} className="flex items-center gap-1 text-[11px] font-bold text-[#142653]/60">
-                        <span>{d.icon}</span> {d.label}
+                    {pet.dateOfBirth && (
+                      <div className="text-[11px] font-bold text-[#142653]/60">
+                        🎂{" "}
+                        {new Date(pet.dateOfBirth).toLocaleDateString("en-IN")}
                       </div>
-                    ))}
+                    )}
+
+                    {pet.gender && (
+                      <div className="text-[11px] font-bold text-[#142653]/60">
+                        {pet.gender === "Male" ? "♂️" : "♀️"} {pet.gender}
+                      </div>
+                    )}
+
+                    {pet.weight && (
+                      <div className="text-[11px] font-bold text-[#142653]/60">
+                        ⚖️ {pet.weight} {pet.weightUnit || "kg"}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -339,7 +756,6 @@ export default function ProfilePage() {
 
         {/* ════ RIGHT 1/3 ════ */}
         <div className="space-y-6">
-
           {/* ── Account Security ── */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-orange-50">
             <SectionHeader
@@ -353,7 +769,10 @@ export default function ProfilePage() {
                 icon: <Lock className="w-4 h-4 text-[#142653]/60" />,
                 title: "Change Password",
                 sub: "Update your password regularly",
-                onClick: () => { setPwOpen(v => !v); setPwMsg(null); },
+                onClick: () => {
+                  setPwOpen((v) => !v);
+                  setPwMsg(null);
+                },
               },
               {
                 icon: <ShieldCheck className="w-4 h-4 text-[#142653]/60" />,
@@ -367,7 +786,7 @@ export default function ProfilePage() {
                 sub: "View your recent login activity",
                 onClick: () => {},
               },
-            ].map(item => (
+            ].map((item) => (
               <button
                 key={item.title}
                 onClick={item.onClick}
@@ -378,11 +797,17 @@ export default function ProfilePage() {
                     {item.icon}
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-bold text-[#142653]">{item.title}</p>
-                    <p className="text-[11px] text-[#142653]/40 font-medium">{item.sub}</p>
+                    <p className="text-sm font-bold text-[#142653]">
+                      {item.title}
+                    </p>
+                    <p className="text-[11px] text-[#142653]/40 font-medium">
+                      {item.sub}
+                    </p>
                   </div>
                 </div>
-                <ChevronRight className={`w-4 h-4 text-[#142653]/30 group-hover:text-coral transition-all ${pwOpen && item.title === "Change Password" ? "rotate-90 text-coral" : ""}`} />
+                <ChevronRight
+                  className={`w-4 h-4 text-[#142653]/30 group-hover:text-coral transition-all ${pwOpen && item.title === "Change Password" ? "rotate-90 text-coral" : ""}`}
+                />
               </button>
             ))}
 
@@ -390,36 +815,66 @@ export default function ProfilePage() {
             {pwOpen && (
               <div className="mt-3 pt-4 border-t border-gray-100">
                 {pwMsg && (
-                  <div className={`flex items-center gap-2 p-3 rounded-xl mb-3 text-xs font-semibold ${
-                    pwMsg.type === "success" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-red-50 text-red-700 border border-red-100"
-                  }`}>
-                    {pwMsg.type === "success" ? <Check className="w-4 h-4 flex-shrink-0" /> : <AlertTriangle className="w-4 h-4 flex-shrink-0" />}
+                  <div
+                    className={`flex items-center gap-2 p-3 rounded-xl mb-3 text-xs font-semibold ${
+                      pwMsg.type === "success"
+                        ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                        : "bg-red-50 text-red-700 border border-red-100"
+                    }`}
+                  >
+                    {pwMsg.type === "success" ? (
+                      <Check className="w-4 h-4 flex-shrink-0" />
+                    ) : (
+                      <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                    )}
                     {pwMsg.text}
                   </div>
                 )}
                 <form onSubmit={handleChangePw} className="space-y-3">
                   {[
-                    { key: "current", label: "Current Password", placeholder: "••••••••" },
-                    { key: "newPw",   label: "New Password",     placeholder: "Min 8 characters" },
-                    { key: "confirm", label: "Confirm Password", placeholder: "Repeat new password" },
-                  ].map(f => (
+                    {
+                      key: "current",
+                      label: "Current Password",
+                      placeholder: "••••••••",
+                    },
+                    {
+                      key: "newPw",
+                      label: "New Password",
+                      placeholder: "Min 8 characters",
+                    },
+                    {
+                      key: "confirm",
+                      label: "Confirm Password",
+                      placeholder: "Repeat new password",
+                    },
+                  ].map((f) => (
                     <div key={f.key}>
-                      <label className="block text-[11px] font-black text-[#142653]/50 uppercase tracking-wider mb-1">{f.label}</label>
+                      <label className="block text-[11px] font-black text-[#142653]/50 uppercase tracking-wider mb-1">
+                        {f.label}
+                      </label>
                       <div className="relative">
                         <input
                           type={showPw[f.key] ? "text" : "password"}
                           value={pw[f.key]}
-                          onChange={e => setPw(p => ({ ...p, [f.key]: e.target.value }))}
+                          onChange={(e) =>
+                            setPw((p) => ({ ...p, [f.key]: e.target.value }))
+                          }
                           placeholder={f.placeholder}
                           className="w-full pr-9 pl-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-coral focus:ring-2 focus:ring-coral/15 transition-all font-medium text-[#142653] bg-gray-50"
                         />
                         <button
                           type="button"
                           tabIndex={-1}
-                          onClick={() => setShowPw(p => ({ ...p, [f.key]: !p[f.key] }))}
+                          onClick={() =>
+                            setShowPw((p) => ({ ...p, [f.key]: !p[f.key] }))
+                          }
                           className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#142653]/30 hover:text-[#142653] transition-colors"
                         >
-                          {showPw[f.key] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          {showPw[f.key] ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
                         </button>
                       </div>
                     </div>
@@ -429,7 +884,15 @@ export default function ProfilePage() {
                     disabled={pwLoading}
                     className="w-full bg-[#142653] text-white py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#142653]/90 transition-all disabled:opacity-60"
                   >
-                    {pwLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Updating…</> : <><Save className="w-4 h-4" /> Update Password</>}
+                    {pwLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" /> Updating…
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" /> Update Password
+                      </>
+                    )}
                   </button>
                 </form>
               </div>
@@ -446,24 +909,53 @@ export default function ProfilePage() {
 
             <div className="space-y-3">
               {[
-                { key: "orderUpdates",        icon: "📦", label: "Order Updates",        sub: "Get notified about your orders" },
-                { key: "offersPromos",        icon: "🎁", label: "Offers & Promotions",  sub: "Receive exclusive deals and offers" },
-                { key: "petCareTips",         icon: "🐾", label: "Pet Care Tips",        sub: "Get helpful pet care content" },
-                { key: "prescriptionUpdates", icon: "💊", label: "Prescription Updates", sub: "Reminders and prescription status" },
-              ].map(n => (
-                <div key={n.key} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors">
+                {
+                  key: "orderUpdates",
+                  icon: "📦",
+                  label: "Order Updates",
+                  sub: "Get notified about your orders",
+                },
+                {
+                  key: "offersPromos",
+                  icon: "🎁",
+                  label: "Offers & Promotions",
+                  sub: "Receive exclusive deals and offers",
+                },
+                {
+                  key: "petCareTips",
+                  icon: "🐾",
+                  label: "Pet Care Tips",
+                  sub: "Get helpful pet care content",
+                },
+                {
+                  key: "prescriptionUpdates",
+                  icon: "💊",
+                  label: "Prescription Updates",
+                  sub: "Reminders and prescription status",
+                },
+              ].map((n) => (
+                <div
+                  key={n.key}
+                  className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors"
+                >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-[#FFF0E8] rounded-xl flex items-center justify-center text-base">
                       {n.icon}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-[#142653]">{n.label}</p>
-                      <p className="text-[11px] text-[#142653]/40 font-medium">{n.sub}</p>
+                      <p className="text-sm font-bold text-[#142653]">
+                        {n.label}
+                      </p>
+                      <p className="text-[11px] text-[#142653]/40 font-medium">
+                        {n.sub}
+                      </p>
                     </div>
                   </div>
                   <Toggle
                     checked={notifs[n.key]}
-                    onChange={v => setNotifs(prev => ({ ...prev, [n.key]: v }))}
+                    onChange={(v) =>
+                      setNotifs((prev) => ({ ...prev, [n.key]: v }))
+                    }
                   />
                 </div>
               ))}
@@ -477,8 +969,12 @@ export default function ProfilePage() {
                 <Trash2 className="w-5 h-5 text-red-500" />
               </div>
               <div>
-                <h3 className="font-black text-[#142653] text-base">Delete Account</h3>
-                <p className="text-xs text-[#142653]/50 font-medium">Permanently delete your account and all data.</p>
+                <h3 className="font-black text-[#142653] text-base">
+                  Delete Account
+                </h3>
+                <p className="text-xs text-[#142653]/50 font-medium">
+                  Permanently delete your account and all data.
+                </p>
               </div>
             </div>
             <button className="w-full flex items-center justify-center gap-2 border-2 border-red-200 text-red-500 py-2.5 rounded-xl text-sm font-bold hover:bg-red-50 transition-all">
@@ -486,6 +982,534 @@ export default function ProfilePage() {
             </button>
           </div>
 
+          {/* ═══════════════════════════════════════
+    PROFILE EDIT MODAL
+═══════════════════════════════════════ */}
+
+          {profileOpen && (
+            <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-black text-[#142653]">
+                      Edit Personal Information
+                    </h2>
+
+                    <p className="text-xs text-[#142653]/50 mt-1">
+                      Update your personal details
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setProfileOpen(false)}
+                    className="w-9 h-9 rounded-xl hover:bg-gray-100 flex items-center justify-center"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSaveProfile} className="space-y-4">
+                  {/* Name */}
+
+                  <div>
+                    <label className="block text-xs font-black text-[#142653]/50 mb-1.5">
+                      Full Name
+                    </label>
+
+                    <input
+                      type="text"
+                      value={profileForm.name}
+                      onChange={(e) =>
+                        setProfileForm((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-[#142653]"
+                      required
+                    />
+                  </div>
+
+                  {/* Phone */}
+
+                  <div>
+                    <label className="block text-xs font-black text-[#142653]/50 mb-1.5">
+                      Phone Number
+                    </label>
+
+                    <input
+                      type="tel"
+                      value={profileForm.phone}
+                      onChange={(e) =>
+                        setProfileForm((prev) => ({
+                          ...prev,
+                          phone: e.target.value,
+                        }))
+                      }
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-[#142653]"
+                    />
+                  </div>
+
+                  {/* Email - read only */}
+
+                  <div>
+                    <label className="block text-xs font-black text-[#142653]/50 mb-1.5">
+                      Email
+                    </label>
+
+                    <input
+                      type="email"
+                      value={user?.email || ""}
+                      disabled
+                      className="w-full px-4 py-3 border border-gray-100 rounded-xl bg-gray-50 text-gray-400"
+                    />
+
+                    <p className="text-[10px] text-gray-400 mt-1">
+                      Email cannot be changed here.
+                    </p>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={profileLoading}
+                    className="w-full bg-[#142653] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {profileLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" />
+                        Save Changes
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* ═══════════════════════════════════════
+    ADDRESS MODAL
+═══════════════════════════════════════ */}
+
+          {addressOpen && (
+            <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-black text-[#142653]">
+                      {editingAddress ? "Edit Address" : "Add New Address"}
+                    </h2>
+
+                    <p className="text-xs text-[#142653]/50 mt-1">
+                      {editingAddress
+                        ? "Update your delivery address"
+                        : "Add a new delivery address"}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setAddressOpen(false)}
+                    className="w-9 h-9 rounded-xl hover:bg-gray-100 flex items-center justify-center"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSaveAddress} className="space-y-4">
+                  {/* Type */}
+
+                  <div>
+                    <label className="block text-xs font-black text-[#142653]/50 mb-1.5">
+                      Address Type
+                    </label>
+
+                    <select
+                      value={addressForm.type}
+                      onChange={(e) =>
+                        setAddressForm((prev) => ({
+                          ...prev,
+                          type: e.target.value,
+                        }))
+                      }
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none"
+                    >
+                      <option value="Home">Home</option>
+                      <option value="Office">Office</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+
+                  {/* Name */}
+
+                  <div>
+                    <label className="block text-xs font-black text-[#142653]/50 mb-1.5">
+                      Name
+                    </label>
+
+                    <input
+                      type="text"
+                      required
+                      value={addressForm.name}
+                      onChange={(e) =>
+                        setAddressForm((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none"
+                    />
+                  </div>
+
+                  {/* Street */}
+
+                  <div>
+                    <label className="block text-xs font-black text-[#142653]/50 mb-1.5">
+                      Street / Address
+                    </label>
+
+                    <input
+                      type="text"
+                      required
+                      value={addressForm.street}
+                      onChange={(e) =>
+                        setAddressForm((prev) => ({
+                          ...prev,
+                          street: e.target.value,
+                        }))
+                      }
+                      placeholder="House no, building, street"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none"
+                    />
+                  </div>
+
+                  {/* City + State */}
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-black text-[#142653]/50 mb-1.5">
+                        City
+                      </label>
+
+                      <input
+                        type="text"
+                        required
+                        value={addressForm.city}
+                        onChange={(e) =>
+                          setAddressForm((prev) => ({
+                            ...prev,
+                            city: e.target.value,
+                          }))
+                        }
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-black text-[#142653]/50 mb-1.5">
+                        State
+                      </label>
+
+                      <input
+                        type="text"
+                        required
+                        value={addressForm.state}
+                        onChange={(e) =>
+                          setAddressForm((prev) => ({
+                            ...prev,
+                            state: e.target.value,
+                          }))
+                        }
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Pincode + Phone */}
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-black text-[#142653]/50 mb-1.5">
+                        Pincode
+                      </label>
+
+                      <input
+                        type="text"
+                        required
+                        value={addressForm.pincode}
+                        onChange={(e) =>
+                          setAddressForm((prev) => ({
+                            ...prev,
+                            pincode: e.target.value,
+                          }))
+                        }
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-black text-[#142653]/50 mb-1.5">
+                        Phone
+                      </label>
+
+                      <input
+                        type="tel"
+                        value={addressForm.phone}
+                        onChange={(e) =>
+                          setAddressForm((prev) => ({
+                            ...prev,
+                            phone: e.target.value,
+                          }))
+                        }
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Default */}
+
+                  <label className="flex items-center gap-2 text-sm font-bold text-[#142653]">
+                    <input
+                      type="checkbox"
+                      checked={addressForm.isDefault}
+                      onChange={(e) =>
+                        setAddressForm((prev) => ({
+                          ...prev,
+                          isDefault: e.target.checked,
+                        }))
+                      }
+                    />
+                    Make this my default address
+                  </label>
+
+                  <button
+                    type="submit"
+                    disabled={addressLoading}
+                    className="w-full bg-[#142653] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {addressLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" />
+                        {editingAddress ? "Update Address" : "Save Address"}
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* ═══════════════════════════════════════
+    PET MODAL
+═══════════════════════════════════════ */}
+
+          {petOpen && (
+            <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-black text-[#142653]">
+                      {editingPet ? "Edit Pet" : "Add Pet"}
+                    </h2>
+
+                    <p className="text-xs text-[#142653]/50 mt-1">
+                      {editingPet
+                        ? "Update your pet information"
+                        : "Add your pet information"}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPetOpen(false);
+                      setEditingPet(null);
+                    }}
+                    className="w-9 h-9 rounded-xl hover:bg-gray-100 flex items-center justify-center"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSavePet} className="space-y-4">
+                  {/* Pet Name */}
+                  <div>
+                    <label className="block text-xs font-black text-[#142653]/50 mb-1.5">
+                      Pet Name
+                    </label>
+
+                    <input
+                      type="text"
+                      required
+                      value={petForm.name}
+                      onChange={(e) =>
+                        setPetForm((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
+                      placeholder="Enter pet name"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-coral"
+                    />
+                  </div>
+
+                  {/* Pet Type */}
+                  <div>
+                    <label className="block text-xs font-black text-[#142653]/50 mb-1.5">
+                      Pet Type
+                    </label>
+
+                    <select
+                      value={petForm.type}
+                      onChange={(e) =>
+                        setPetForm((prev) => ({
+                          ...prev,
+                          type: e.target.value,
+                        }))
+                      }
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-coral"
+                    >
+                      <option value="Dog">Dog</option>
+                      <option value="Cat">Cat</option>
+                      <option value="Bird">Bird</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+
+                  {/* Breed */}
+                  <div>
+                    <label className="block text-xs font-black text-[#142653]/50 mb-1.5">
+                      Breed
+                    </label>
+
+                    <input
+                      type="text"
+                      value={petForm.breed}
+                      onChange={(e) =>
+                        setPetForm((prev) => ({
+                          ...prev,
+                          breed: e.target.value,
+                        }))
+                      }
+                      placeholder="Golden Retriever"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-coral"
+                    />
+                  </div>
+
+                  {/* Date of Birth */}
+                  <div>
+                    <label className="block text-xs font-black text-[#142653]/50 mb-1.5">
+                      Date of Birth
+                    </label>
+
+                    <input
+                      type="date"
+                      value={petForm.dateOfBirth}
+                      onChange={(e) =>
+                        setPetForm((prev) => ({
+                          ...prev,
+                          dateOfBirth: e.target.value,
+                        }))
+                      }
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-coral"
+                    />
+                  </div>
+
+                  {/* Gender + Weight */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-black text-[#142653]/50 mb-1.5">
+                        Gender
+                      </label>
+
+                      <select
+                        value={petForm.gender}
+                        onChange={(e) =>
+                          setPetForm((prev) => ({
+                            ...prev,
+                            gender: e.target.value,
+                          }))
+                        }
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-coral"
+                      >
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-black text-[#142653]/50 mb-1.5">
+                        Weight
+                      </label>
+
+                      <div className="flex gap-2">
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.1"
+                          value={petForm.weight}
+                          onChange={(e) =>
+                            setPetForm((prev) => ({
+                              ...prev,
+                              weight: e.target.value,
+                            }))
+                          }
+                          placeholder="10"
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-coral"
+                        />
+
+                        <select
+                          value={petForm.weightUnit}
+                          onChange={(e) =>
+                            setPetForm((prev) => ({
+                              ...prev,
+                              weightUnit: e.target.value,
+                            }))
+                          }
+                          className="px-3 border border-gray-200 rounded-xl outline-none"
+                        >
+                          <option value="kg">kg</option>
+                          <option value="lb">lb</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Submit */}
+                  <button
+                    type="submit"
+                    disabled={petLoading}
+                    className="w-full bg-[#142653] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#142653]/90 disabled:opacity-50"
+                  >
+                    {petLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" />
+
+                        {editingPet ? "Update Pet" : "Add Pet"}
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
