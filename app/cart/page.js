@@ -80,7 +80,10 @@ export default function CartPage() {
 
   const fetchPrescriptions = useCallback(async () => {
     try {
-      const response = await prescriptionService.getMy();
+      // Use /current endpoint which returns ONLY isCurrent=true records.
+      // This guarantees consumed or superseded prescriptions never appear
+      // as "Approved" in the cart after an order has been placed.
+      const response = await prescriptionService.getCurrent();
 
       const rows =
         response?.data?.data ||
@@ -99,20 +102,13 @@ export default function CartPage() {
 
         if (!productId) return;
 
+        // The API already ensures at most one isCurrent record per product,
+        // but if duplicates ever appear we take the newest.
         const existing = next[productId];
-
         if (
           !existing ||
-          new Date(
-            prescription.updatedAt ||
-              prescription.createdAt ||
-              0
-          ) >=
-            new Date(
-              existing.updatedAt ||
-                existing.createdAt ||
-                0
-            )
+          new Date(prescription.updatedAt || prescription.createdAt || 0) >=
+            new Date(existing.updatedAt || existing.createdAt || 0)
         ) {
           next[productId] = prescription;
         }
@@ -304,6 +300,13 @@ export default function CartPage() {
       setPageError("");
 
       if (nextQuantity < 1) {
+        const item = items.find((i) => i.product?._id === productId);
+        if (item?.product?.requiresPrescription && prescriptions[productId]) {
+          const confirm = window.confirm(
+            "Warning: Removing this product will also remove its uploaded prescription from your active records. Do you want to continue?"
+          );
+          if (!confirm) return;
+        }
         await cartService.removeItem(productId);
       } else {
         await cartService.updateItem(
@@ -324,6 +327,15 @@ export default function CartPage() {
   const clearCart = async () => {
     try {
       setPageError("");
+      
+      const hasPrescription = items.some((i) => i.product?.requiresPrescription && prescriptions[i.product._id]);
+      if (hasPrescription) {
+        const confirm = window.confirm(
+          "Warning: Clearing your cart will also remove uploaded prescriptions from your active records. Do you want to continue?"
+        );
+        if (!confirm) return;
+      }
+
       await cartService.clear();
       setCart(null);
       setPrescriptions({});
@@ -336,10 +348,6 @@ export default function CartPage() {
   };
 
   const proceedToCheckout = (mode = "all") => {
-    if (mode === "all" && pendingItems.length > 0) {
-      return;
-    }
-
     if (
       mode === "non-prescription" &&
       nonPrescriptionItems.length === 0
@@ -658,36 +666,32 @@ export default function CartPage() {
 
               {/* Checkout options */}
               <div className="mt-6 space-y-3">
-                {nonPrescriptionItems.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      proceedToCheckout("non-prescription")
-                    }
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0F5132] px-5 py-4 font-bold text-white transition hover:bg-[#0A3622] active:scale-[0.99]"
-                  >
-                    Checkout non-prescription items
-                    <ArrowRight size={19} />
-                  </button>
-                )}
-
+                {/* Main checkout button — always enabled */}
                 <button
                   type="button"
-                  disabled={pendingItems.length > 0}
                   onClick={() => proceedToCheckout("all")}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#1e2338] px-5 py-4 font-bold text-white transition hover:bg-[#111424] disabled:cursor-not-allowed disabled:bg-gray-400"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#1e2338] px-5 py-4 font-bold text-white transition hover:bg-[#111424] active:scale-[0.99]"
                 >
-                  {pendingItems.length > 0
-                    ? "Approve all prescriptions to checkout"
-                    : "Proceed to checkout"}
+                  Proceed to Checkout
                   <ArrowRight size={19} />
                 </button>
 
+                {/* Quick path for non-prescription-only checkout */}
+                {nonPrescriptionItems.length > 0 && pendingItems.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => proceedToCheckout("non-prescription")}
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#0F5132] bg-white px-5 py-3.5 text-sm font-bold text-[#0F5132] transition hover:bg-green-50 active:scale-[0.99]"
+                  >
+                    Skip to non-prescription checkout
+                    <ArrowRight size={17} />
+                  </button>
+                )}
+
                 {pendingItems.length > 0 && (
                   <p className="text-center text-xs text-gray-500">
-                    Prescription items remain in your cart until
-                    approved. You can still check out eligible
-                    non-prescription items above.
+                    Prescription items stay in your cart until approved.
+                    You can still place a partial order from checkout.
                   </p>
                 )}
               </div>
