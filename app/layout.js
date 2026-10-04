@@ -4,6 +4,7 @@ import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
 import ServiceWorkerRegister from '../components/ServiceWorkerRegister';
 import TopBar from '../components/TopBar';
+import FloatingCart from '../components/FloatingCart';
 
 export const metadata = {
   title: {
@@ -36,6 +37,7 @@ export default function RootLayout({ children }) {
           <SiteHeader />
           <main>{children}</main>
           <SiteFooter />
+          <FloatingCart />
         </AuthProvider>
         <ServiceWorkerRegister />
       </body>
