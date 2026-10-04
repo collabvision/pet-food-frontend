@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { cartService, prescriptionService } from "@/lib/services";
 import { convertToWebp } from "@/lib/utils/convertToWebp";
+import { useAuth } from "@/lib/auth-context";
 
 const STATUS_META = {
   PENDING: {
@@ -50,6 +51,7 @@ const formatPrice = (value) =>
 
 export default function CartPage() {
   const router = useRouter();
+  const { status: authStatus } = useAuth();
 
   const [cart, setCart] = useState(null);
   const [isCartLoading, setIsCartLoading] = useState(true);
@@ -121,9 +123,15 @@ export default function CartPage() {
   }, []);
 
   useEffect(() => {
+    // Wait for the AuthProvider to finish restoring the session from the
+    // HttpOnly refresh-token cookie before firing authenticated API calls.
+    // Without this guard, a page refresh triggers fetchCart() before the
+    // in-memory access token is populated, causing a false "session timeout".
+    if (authStatus !== "authenticated") return;
+
     fetchCart();
     fetchPrescriptions();
-  }, [fetchCart, fetchPrescriptions]);
+  }, [authStatus, fetchCart, fetchPrescriptions]);
 
   const items = cart?.items || [];
 
@@ -362,7 +370,7 @@ export default function CartPage() {
     );
   };
 
-  if (isCartLoading && !cart) {
+  if (authStatus === "loading" || (isCartLoading && !cart)) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#FFFBF9]">
         <Loader2 className="h-10 w-10 animate-spin text-[#0F5132]" />
