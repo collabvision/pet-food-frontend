@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { categoryService } from '@/services/api-service';
+import { categoryService } from '@/lib/services';
 import PageHeader from '@/components/admin/PageHeader';
 
 export default function NewCategoryPage() {

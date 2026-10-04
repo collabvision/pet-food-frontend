@@ -32,6 +32,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { authService } from "@/lib/services";
+import { CustomDropdown, FormField } from "@/components/FormComponents";
+import { INDIA_STATES, CITIES_BY_STATE } from "@/components/IndiaLocationData";
 
 /* ─── Toggle Switch Component ─── */
 function Toggle({ checked, onChange }) {
@@ -467,9 +469,6 @@ export default function ProfilePage() {
                 <div className="w-24 h-24 rounded-full bg-gradient-to-br from-coral to-orange-300 flex items-center justify-center text-3xl font-black text-white shadow-lg ring-4 ring-white">
                   {initials}
                 </div>
-                <button className="absolute bottom-0 right-0 w-8 h-8 bg-[#142653] rounded-full flex items-center justify-center shadow-lg hover:bg-coral transition-colors">
-                  <Camera className="w-4 h-4 text-white" />
-                </button>
               </div>
 
               {/* Info grid */}
@@ -899,68 +898,7 @@ export default function ProfilePage() {
             )}
           </div>
 
-          {/* ── Notification Preferences ── */}
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-orange-50">
-            <SectionHeader
-              icon={<Bell className="w-5 h-5 text-coral" />}
-              title="Notification Preferences"
-              subtitle="Choose what updates you want to receive."
-            />
 
-            <div className="space-y-3">
-              {[
-                {
-                  key: "orderUpdates",
-                  icon: "📦",
-                  label: "Order Updates",
-                  sub: "Get notified about your orders",
-                },
-                {
-                  key: "offersPromos",
-                  icon: "🎁",
-                  label: "Offers & Promotions",
-                  sub: "Receive exclusive deals and offers",
-                },
-                {
-                  key: "petCareTips",
-                  icon: "🐾",
-                  label: "Pet Care Tips",
-                  sub: "Get helpful pet care content",
-                },
-                {
-                  key: "prescriptionUpdates",
-                  icon: "💊",
-                  label: "Prescription Updates",
-                  sub: "Reminders and prescription status",
-                },
-              ].map((n) => (
-                <div
-                  key={n.key}
-                  className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-[#FFF0E8] rounded-xl flex items-center justify-center text-base">
-                      {n.icon}
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-[#142653]">
-                        {n.label}
-                      </p>
-                      <p className="text-[11px] text-[#142653]/40 font-medium">
-                        {n.sub}
-                      </p>
-                    </div>
-                  </div>
-                  <Toggle
-                    checked={notifs[n.key]}
-                    onChange={(v) =>
-                      setNotifs((prev) => ({ ...prev, [n.key]: v }))
-                    }
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
 
           {/* ── Delete Account ── */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-red-50">
@@ -1123,152 +1061,98 @@ export default function ProfilePage() {
 
                 <form onSubmit={handleSaveAddress} className="space-y-4">
                   {/* Type */}
-
                   <div>
                     <label className="block text-xs font-black text-[#142653]/50 mb-1.5">
                       Address Type
                     </label>
-
-                    <select
+                    <CustomDropdown
+                      options={["Home", "Office", "Other"]}
                       value={addressForm.type}
-                      onChange={(e) =>
-                        setAddressForm((prev) => ({
-                          ...prev,
-                          type: e.target.value,
-                        }))
+                      searchable={false}
+                      accentColor="blue"
+                      onChange={(val) =>
+                        setAddressForm((prev) => ({ ...prev, type: val }))
                       }
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none"
-                    >
-                      <option value="Home">Home</option>
-                      <option value="Office">Office</option>
-                      <option value="Other">Other</option>
-                    </select>
+                    />
                   </div>
 
                   {/* Name */}
-
-                  <div>
-                    <label className="block text-xs font-black text-[#142653]/50 mb-1.5">
-                      Name
-                    </label>
-
-                    <input
-                      type="text"
-                      required
-                      value={addressForm.name}
-                      onChange={(e) =>
-                        setAddressForm((prev) => ({
-                          ...prev,
-                          name: e.target.value,
-                        }))
-                      }
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none"
-                    />
-                  </div>
+                  <FormField
+                    label="Name"
+                    required
+                    accentColor="blue"
+                    value={addressForm.name}
+                    placeholder="Full name"
+                    onChange={(e) =>
+                      setAddressForm((prev) => ({ ...prev, name: e.target.value }))
+                    }
+                  />
 
                   {/* Street */}
+                  <FormField
+                    label="Street / Address"
+                    required
+                    accentColor="blue"
+                    value={addressForm.street}
+                    placeholder="House no, building, street"
+                    onChange={(e) =>
+                      setAddressForm((prev) => ({ ...prev, street: e.target.value }))
+                    }
+                  />
 
-                  <div>
-                    <label className="block text-xs font-black text-[#142653]/50 mb-1.5">
-                      Street / Address
-                    </label>
-
-                    <input
-                      type="text"
+                  {/* State + City */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <CustomDropdown
+                      label="State"
                       required
-                      value={addressForm.street}
-                      onChange={(e) =>
-                        setAddressForm((prev) => ({
-                          ...prev,
-                          street: e.target.value,
-                        }))
+                      accentColor="blue"
+                      options={INDIA_STATES}
+                      value={addressForm.state}
+                      placeholder="Select State"
+                      onChange={(val) =>
+                        setAddressForm((prev) => ({ ...prev, state: val, city: "" }))
                       }
-                      placeholder="House no, building, street"
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none"
                     />
-                  </div>
-
-                  {/* City + State */}
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-black text-[#142653]/50 mb-1.5">
-                        City
-                      </label>
-
-                      <input
-                        type="text"
-                        required
-                        value={addressForm.city}
-                        onChange={(e) =>
-                          setAddressForm((prev) => ({
-                            ...prev,
-                            city: e.target.value,
-                          }))
-                        }
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-black text-[#142653]/50 mb-1.5">
-                        State
-                      </label>
-
-                      <input
-                        type="text"
-                        required
-                        value={addressForm.state}
-                        onChange={(e) =>
-                          setAddressForm((prev) => ({
-                            ...prev,
-                            state: e.target.value,
-                          }))
-                        }
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none"
-                      />
-                    </div>
+                    <CustomDropdown
+                      label="City"
+                      required
+                      accentColor="blue"
+                      options={addressForm.state ? (CITIES_BY_STATE[addressForm.state] || []) : []}
+                      value={addressForm.city}
+                      placeholder={addressForm.state ? "Select City" : "Select state first"}
+                      disabled={!addressForm.state}
+                      onChange={(val) =>
+                        setAddressForm((prev) => ({ ...prev, city: val }))
+                      }
+                    />
                   </div>
 
                   {/* Pincode + Phone */}
-
                   <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-black text-[#142653]/50 mb-1.5">
-                        Pincode
-                      </label>
-
-                      <input
-                        type="text"
-                        required
-                        value={addressForm.pincode}
-                        onChange={(e) =>
-                          setAddressForm((prev) => ({
-                            ...prev,
-                            pincode: e.target.value,
-                          }))
-                        }
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-black text-[#142653]/50 mb-1.5">
-                        Phone
-                      </label>
-
-                      <input
-                        type="tel"
-                        value={addressForm.phone}
-                        onChange={(e) =>
-                          setAddressForm((prev) => ({
-                            ...prev,
-                            phone: e.target.value,
-                          }))
-                        }
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none"
-                      />
-                    </div>
+                    <FormField
+                      label="Pincode"
+                      required
+                      accentColor="blue"
+                      value={addressForm.pincode}
+                      placeholder="560001"
+                      maxLength={6}
+                      inputMode="numeric"
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+                        setAddressForm((prev) => ({ ...prev, pincode: val }));
+                      }}
+                    />
+                    <FormField
+                      label="Phone"
+                      accentColor="blue"
+                      type="tel"
+                      value={addressForm.phone}
+                      placeholder="+91 98765 43210"
+                      maxLength={15}
+                      onChange={(e) =>
+                        setAddressForm((prev) => ({ ...prev, phone: e.target.value }))
+                      }
+                    />
                   </div>
 
                   {/* Default */}

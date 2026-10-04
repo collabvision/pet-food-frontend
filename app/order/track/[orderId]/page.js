@@ -203,7 +203,7 @@ export default function OrderTrackingPage() {
   const addr     = order.shippingAddress || {};
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-5xl mx-auto py-10 px-4 sm:px-6 lg:px-8 space-y-8">
 
       {/* ── Back button ── */}
       <button

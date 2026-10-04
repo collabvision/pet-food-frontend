@@ -5,8 +5,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import {
-  Package, FileText, RefreshCcw, Heart, Bell, Settings, ArrowRight,
-  LayoutDashboard, CreditCard, PawPrint, MapPin, LogOut
+  Package, FileText, RefreshCcw, ArrowRight,
+  LayoutDashboard, PawPrint, MapPin, LogOut, Heart
 } from "lucide-react";
 
 /* ─── Sidebar links ────────────────────────────────────── */
@@ -17,9 +17,6 @@ const SIDEBAR_LINKS = [
   { name: "My Orders",            icon: Package,         href: "/account/orders" },
   { name: "Prescriptions",        icon: FileText,        href: "/account/prescriptions" },
   { name: "Returns & Refunds",    icon: RefreshCcw,      href: "/account/returns" },
-  { name: "Wishlist",             icon: Heart,           href: "/account/wishlist" },
-  { name: "Notifications",        icon: Bell,            href: "/account/notifications" },
-  { name: "Settings",             icon: Settings,        href: "/account/settings" },
 ];
 
 export default function AccountLayout({ children }) {

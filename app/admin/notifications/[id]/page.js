@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { notificationService } from '@/services/api-service';
+import { notificationService } from '@/lib/services';
 import PageHeader from '@/components/admin/PageHeader';
 import LoadingState from '@/components/admin/LoadingState';
 import EmptyState from '@/components/admin/EmptyState';

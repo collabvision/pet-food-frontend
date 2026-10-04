@@ -22,9 +22,9 @@ export default function SiteFooter() {
           <p className="mt-1 text-sm text-navy/60">Happy Pets. Happier Humans.</p>
         </div>
 
-        <FooterColumn title="Shop" links={['Food', 'Treats', 'Supplements', 'Toys', 'Accessories']} />
-        <FooterColumn title="About" links={['Our Story', 'Vet Partners', 'Sustainability', 'Careers']} />
-        <FooterColumn title="Support" links={['Contact Us', 'Shipping', 'Returns', 'FAQs']} />
+        <FooterColumn title="Company" links={[{ label: 'Home', href: '/' }, { label: 'About', href: '/about' }, { label: 'Contact', href: '/contact' }]} />
+        <FooterColumn title="Store" links={[{ label: 'Shop', href: '/products' }, { label: 'Prescription Process', href: '/prescription-process' }]} />
+        <FooterColumn title="Support" links={[{ label: 'Shipping', href: '/shipping' }, { label: 'Returns', href: '/returns' }, { label: 'FAQs', href: '/faqs' }]} />
 
         <div>
           <p className="font-semibold text-navy">Join Our Pack</p>
@@ -67,9 +67,9 @@ function FooterColumn({ title, links }) {
       <p className="font-semibold text-navy">{title}</p>
       <ul className="mt-2 space-y-1.5 text-sm text-navy/60">
         {links.map((l) => (
-          <li key={l}>
-            <Link href="#" className="hover:text-coral">
-              {l}
+          <li key={l.label}>
+            <Link href={l.href} className="hover:text-coral">
+              {l.label}
             </Link>
           </li>
         ))}

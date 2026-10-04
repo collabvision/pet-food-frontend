@@ -38,7 +38,18 @@ import {
   prescriptionService,
   returnService,
   categoryService,
+  systemService,
 } from "@/lib/services";
+import { API_URL, getAccessToken } from "@/lib/api";
+
+function formatBytes(bytes, decimals = 2) {
+    if (!+bytes) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+}
 
 function unwrap(response) {
   if (!response) return [];
@@ -343,6 +354,7 @@ export default function AdminDashboard() {
   const [prescriptions, setPrescriptions] = useState([]);
   const [returns, setReturns] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [systemMetrics, setSystemMetrics] = useState(null);
 
   const [period, setPeriod] = useState("30");
 
@@ -366,6 +378,7 @@ export default function AdminDashboard() {
         prescriptionService.adminGetAll(),
         returnService.adminGetAll(),
         categoryService.getAll(),
+        systemService.getMetrics(),
       ]);
 
       if (!mounted) return;
@@ -392,6 +405,14 @@ export default function AdminDashboard() {
 
       if (categoriesResponse.status === "fulfilled") {
         setCategories(unwrap(categoriesResponse.value));
+      }
+
+      const metricsRes = arguments[0]?.[6] || await systemService.getMetrics().catch(()=>null);
+      if (metricsRes?.data) {
+        setSystemMetrics(metricsRes.data);
+      } else {
+        const directRes = await systemService.getMetrics().catch(() => null);
+        if (directRes?.data) setSystemMetrics(directRes.data);
       }
 
       setLoading(false);
@@ -570,6 +591,25 @@ export default function AdminDashboard() {
     }).format(new Date());
   }, []);
 
+  const handleExport = (format) => {
+      const url = `${API_URL}/system/export?format=${format}`;
+      fetch(url, {
+          headers: {
+              Authorization: `Bearer ${getAccessToken()}`
+          }
+      })
+      .then(res => res.blob())
+      .then(blob => {
+          const downloadUrl = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = downloadUrl;
+          a.download = `furnest_export.${format === "excel" ? "xlsx" : "json"}`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+      });
+  };
+
   return (
     <div className="mx-auto w-full max-w-[1700px] space-y-5">
       {/* WELCOME */}
@@ -610,6 +650,22 @@ export default function AdminDashboard() {
               <ShoppingCart className="h-3.5 w-3.5" />
               View Orders
             </Link>
+            
+            <button
+              onClick={() => handleExport("json")}
+              className="inline-flex items-center gap-2 rounded-xl bg-orange-100 px-4 py-2.5 text-[10px] font-extrabold text-orange-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-orange-200"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              Export JSON
+            </button>
+
+            <button
+              onClick={() => handleExport("excel")}
+              className="inline-flex items-center gap-2 rounded-xl bg-green-100 px-4 py-2.5 text-[10px] font-extrabold text-green-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-green-200"
+            >
+              <ListOrdered className="h-3.5 w-3.5" />
+              Export Excel
+            </button>
           </div>
         </div>
 
@@ -728,6 +784,33 @@ export default function AdminDashboard() {
           trendPositive={false}
         />
       </section>
+
+      {/* SYSTEM METRICS SECTION */}
+      {systemMetrics && (
+        <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <Card className="flex flex-col items-start justify-center p-5">
+            <p className="text-[11px] font-bold text-[#737c90]">Database Space (MongoDB)</p>
+            <p className="text-[22px] font-black tracking-tight text-[#102f68] mt-1">{formatBytes(systemMetrics.db.storageSize)}</p>
+            <p className="text-[10px] text-[#8a91a2] mt-1">{formatNumber(systemMetrics.db.collections)} Collections • {formatNumber(systemMetrics.db.objects)} Documents</p>
+          </Card>
+          <Card className="flex flex-col items-start justify-center p-5">
+            <p className="text-[11px] font-bold text-[#737c90]">Server Memory Usage</p>
+            <p className="text-[22px] font-black tracking-tight text-[#102f68] mt-1">{formatBytes(systemMetrics.server.memory.used)} <span className="text-[14px] text-[#8a91a2] font-medium">/ {formatBytes(systemMetrics.server.memory.total)}</span></p>
+            <p className="text-[10px] text-[#8a91a2] mt-1">{(systemMetrics.server.memory.used / systemMetrics.server.memory.total * 100).toFixed(1)}% Used</p>
+          </Card>
+          <Card className="flex flex-col items-start justify-center p-5">
+            <p className="text-[11px] font-bold text-[#737c90]">Server Disk Space</p>
+            {systemMetrics.server.disk.total ? (
+                <>
+                  <p className="text-[22px] font-black tracking-tight text-[#102f68] mt-1">{formatBytes(systemMetrics.server.disk.used)} <span className="text-[14px] text-[#8a91a2] font-medium">/ {formatBytes(systemMetrics.server.disk.total)}</span></p>
+                  <p className="text-[10px] text-[#8a91a2] mt-1">{(systemMetrics.server.disk.used / systemMetrics.server.disk.total * 100).toFixed(1)}% Used</p>
+                </>
+            ) : (
+                <p className="text-[14px] text-[#8a91a2] mt-2 font-medium">Stats unavailable</p>
+            )}
+          </Card>
+        </section>
+      )}
 
       {/* MAIN GRID */}
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(300px,0.95fr)]">

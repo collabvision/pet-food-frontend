@@ -84,36 +84,6 @@ const menuItems = [
     href: "/admin/shipping",
     icon: Truck,
   },
-  {
-    title: "Notifications",
-    href: "/admin/notifications",
-    icon: Bell,
-  },
-  {
-    title: "Offers & Banners",
-    href: "/admin/offers",
-    icon: Tag,
-  },
-  {
-    title: "Community",
-    href: "/admin/community",
-    icon: Users2,
-  },
-  {
-    title: "Integrations",
-    href: "/admin/integrations",
-    icon: Plug,
-  },
-  {
-    title: "Reports",
-    href: "/admin/reports",
-    icon: BarChart3,
-  },
-  {
-    title: "Settings",
-    href: "/admin/settings",
-    icon: Settings,
-  },
 ];
 
 function LoadingScreen() {

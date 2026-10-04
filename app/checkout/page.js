@@ -9,7 +9,7 @@ import {
   CreditCard, Banknote, ShieldCheck, Truck,
   Headphones, Heart, AlertTriangle, X as XIcon,
   Clock3, CheckCircle2, AlertCircle, Package,
-  Upload, FileImage, RefreshCw,
+  Upload, FileImage, RefreshCw, MapPin, Home, Briefcase,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -19,6 +19,8 @@ import {
   prescriptionService,
 } from "@/lib/services";
 import { convertToWebp } from "@/lib/utils/convertToWebp";
+import { CustomDropdown, FormField } from "@/components/FormComponents";
+import { INDIA_STATES, CITIES_BY_STATE } from "@/components/IndiaLocationData";
 
 /* ─── helpers ─────────────────────────────────────────────── */
 
@@ -84,6 +86,15 @@ export default function CheckoutPage() {
     state: "",
     country: "India",
   });
+
+  /* ── real-time field validation errors ── */
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  const setError = (field, msg) =>
+    setFieldErrors((prev) => ({ ...prev, [field]: msg }));
+
+  const clearError = (field) =>
+    setFieldErrors((prev) => { const n = { ...prev }; delete n[field]; return n; });
 
   const [paymentMethod, setPaymentMethod] = useState("RAZORPAY");
 
@@ -151,10 +162,24 @@ export default function CheckoutPage() {
         email: user.email || prev.email,
         phone: user.phone || prev.phone,
       }));
-      setAddress((prev) => ({
-        ...prev,
-        name: user.name || prev.name,
-      }));
+      // Auto-fill from default saved address
+      const defaultAddr = user.addresses?.find((a) => a.isDefault) || user.addresses?.[0];
+      if (defaultAddr) {
+        setAddress({
+          name: defaultAddr.name || user.name || "",
+          addressLine1: defaultAddr.street || "",
+          addressLine2: "",
+          pincode: defaultAddr.pincode || "",
+          city: defaultAddr.city || "",
+          state: defaultAddr.state || "",
+          country: defaultAddr.country || "India",
+        });
+      } else {
+        setAddress((prev) => ({
+          ...prev,
+          name: user.name || prev.name,
+        }));
+      }
     }
   }, [user]);
 
@@ -277,17 +302,22 @@ export default function CheckoutPage() {
     });
 
   const validateForm = () => {
-    if (
-      !address.name ||
-      !contact.phone ||
-      !address.addressLine1 ||
-      !address.city ||
-      !address.state ||
-      !address.pincode
-    ) {
-      alert("Please fill in all required delivery and contact details.");
-      return false;
-    }
+    const errors = {};
+    if (!contact.email) errors.email = "Email is required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) errors.email = "Enter a valid email address";
+
+    if (!contact.phone) errors.phone = "Phone number is required";
+    else if (!/^[+]?[0-9]{10,15}$/.test(contact.phone.replace(/\s/g, ""))) errors.phone = "Enter a valid 10-digit phone number";
+
+    if (!address.name) errors.name = "Full name is required";
+    if (!address.addressLine1) errors.addressLine1 = "Address is required";
+    if (!address.state) errors.state = "State is required";
+    if (!address.city) errors.city = "City is required";
+    if (!address.pincode) errors.pincode = "Pincode is required";
+    else if (!/^[1-9][0-9]{5}$/.test(address.pincode)) errors.pincode = "Enter a valid 6-digit Indian pincode";
+
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return false;
     return true;
   };
 
@@ -588,8 +618,8 @@ export default function CheckoutPage() {
           <div className="lg:col-span-8 space-y-6">
 
             {/* Contact info */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-orange-50 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-2 h-full bg-[#ff6f4d]/20" />
+            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-orange-50 relative">
+              <div className="absolute top-0 left-0 w-2 h-full bg-[#ff6f4d]/20 rounded-l-3xl" />
               <div className="flex items-center gap-4 mb-2">
                 <div className="w-10 h-10 rounded-full bg-[#ff6f4d]/10 flex items-center justify-center text-[#ff6f4d]">
                   <svg
@@ -616,160 +646,173 @@ export default function CheckoutPage() {
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-6">
-                <div>
-                  <label className="block text-xs font-bold text-[#142653]/70 mb-1.5 ml-1">
-                    Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    value={contact.email}
-                    onChange={(e) =>
-                      setContact({ ...contact, email: e.target.value })
-                    }
-                    placeholder="riya.sharma@gmail.com"
-                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#ff6f4d] focus:ring-2 focus:ring-[#ff6f4d]/20 transition-all text-sm font-medium"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-[#142653]/70 mb-1.5 ml-1">
-                    Phone Number *
-                  </label>
-                  <input
-                    type="tel"
-                    value={contact.phone}
-                    onChange={(e) =>
-                      setContact({ ...contact, phone: e.target.value })
-                    }
-                    placeholder="+91 98765 43210"
-                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#ff6f4d] focus:ring-2 focus:ring-[#ff6f4d]/20 transition-all text-sm font-medium"
-                  />
-                </div>
+                <FormField
+                  label="Email Address"
+                  required
+                  type="email"
+                  value={contact.email}
+                  placeholder="riya.sharma@gmail.com"
+                  error={fieldErrors.email}
+                  onChange={(e) => {
+                    setContact({ ...contact, email: e.target.value });
+                    if (e.target.value && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.target.value)) clearError("email");
+                    else if (!e.target.value) setError("email", "Email is required");
+                  }}
+                />
+                <FormField
+                  label="Phone Number"
+                  required
+                  type="tel"
+                  value={contact.phone}
+                  placeholder="+91 98765 43210"
+                  error={fieldErrors.phone}
+                  maxLength={15}
+                  onChange={(e) => {
+                    setContact({ ...contact, phone: e.target.value });
+                    const cleaned = e.target.value.replace(/\s/g, "");
+                    if (/^[+]?[0-9]{10,15}$/.test(cleaned)) clearError("phone");
+                    else if (!e.target.value) setError("phone", "Phone is required");
+                  }}
+                />
               </div>
             </div>
 
             {/* Delivery address */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-orange-50 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-2 h-full bg-[#ff6f4d]" />
+            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-orange-50 relative">
+              <div className="absolute top-0 left-0 w-2 h-full bg-[#ff6f4d] rounded-l-3xl" />
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full bg-[#ff6f4d]/10 flex items-center justify-center text-[#ff6f4d]">
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
+                    <MapPin className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-[#142653]">
-                      Delivery Address
-                    </h2>
-                    <p className="text-sm text-[#142653]/50">
-                      We'll deliver your order to this address.
-                    </p>
+                    <h2 className="text-xl font-bold text-[#142653]">Delivery Address</h2>
+                    <p className="text-sm text-[#142653]/50">We'll deliver your order to this address.</p>
                   </div>
                 </div>
               </div>
+
+              {/* ── Saved Address Picker ── */}
+              {user?.addresses?.length > 0 && (
+                <div className="mb-6">
+                  <p className="text-xs font-bold text-[#142653]/60 mb-3 ml-1">USE SAVED ADDRESS</p>
+                  <div className="flex flex-wrap gap-3">
+                    {user.addresses.map((addr) => {
+                      const isActive =
+                        address.addressLine1 === addr.street &&
+                        address.pincode === addr.pincode;
+                      return (
+                        <button
+                          key={addr._id}
+                          type="button"
+                          onClick={() => {
+                            setAddress({
+                              name: addr.name || user.name || "",
+                              addressLine1: addr.street || "",
+                              addressLine2: "",
+                              pincode: addr.pincode || "",
+                              city: addr.city || "",
+                              state: addr.state || "",
+                              country: addr.country || "India",
+                            });
+                            setFieldErrors({});
+                          }}
+                          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold border-2 transition-all ${
+                            isActive
+                              ? "border-[#ff6f4d] bg-[#fff5ef] text-[#ff6f4d]"
+                              : "border-gray-100 bg-gray-50 text-[#142653] hover:border-orange-200"
+                          }`}
+                        >
+                          {addr.type === "Home" ? (
+                            <Home className="w-3.5 h-3.5" />
+                          ) : (
+                            <Briefcase className="w-3.5 h-3.5" />
+                          )}
+                          {addr.type} — {addr.city}
+                          {addr.isDefault && (
+                            <span className="text-[9px] font-black bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded-full">Default</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-3 h-px bg-gray-100" />
+                </div>
+              )}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-xs font-bold text-[#142653]/70 mb-1.5 ml-1">
-                    Full Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={address.name}
-                    onChange={(e) =>
-                      setAddress({ ...address, name: e.target.value })
-                    }
-                    placeholder="Riya Sharma"
-                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#ff6f4d] focus:ring-2 focus:ring-[#ff6f4d]/20 transition-all text-sm font-medium"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-[#142653]/70 mb-1.5 ml-1">
-                    Address *
-                  </label>
-                  <input
-                    type="text"
-                    value={address.addressLine1}
-                    onChange={(e) =>
-                      setAddress({ ...address, addressLine1: e.target.value })
-                    }
-                    placeholder="123 Green Park, Near City Mall"
-                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#ff6f4d] focus:ring-2 focus:ring-[#ff6f4d]/20 transition-all text-sm font-medium"
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold text-[#142653]/70 mb-1.5 ml-1">
-                    Apartment, Suite, etc. (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={address.addressLine2}
-                    onChange={(e) =>
-                      setAddress({ ...address, addressLine2: e.target.value })
-                    }
-                    placeholder="A-101, Sunshine Apartments"
-                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#ff6f4d] focus:ring-2 focus:ring-[#ff6f4d]/20 transition-all text-sm font-medium"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-[#142653]/70 mb-1.5 ml-1">
-                    Pincode *
-                  </label>
-                  <input
-                    type="text"
-                    value={address.pincode}
-                    onChange={(e) =>
-                      setAddress({ ...address, pincode: e.target.value })
-                    }
-                    placeholder="560001"
-                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#ff6f4d] focus:ring-2 focus:ring-[#ff6f4d]/20 transition-all text-sm font-medium"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-[#142653]/70 mb-1.5 ml-1">
-                      City *
-                    </label>
-                    <input
-                      type="text"
-                      value={address.city}
-                      onChange={(e) =>
-                        setAddress({ ...address, city: e.target.value })
-                      }
-                      placeholder="Bangalore"
-                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#ff6f4d] focus:ring-2 focus:ring-[#ff6f4d]/20 transition-all text-sm font-medium"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-[#142653]/70 mb-1.5 ml-1">
-                      State *
-                    </label>
-                    <input
-                      type="text"
-                      value={address.state}
-                      onChange={(e) =>
-                        setAddress({ ...address, state: e.target.value })
-                      }
-                      placeholder="Karnataka"
-                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#ff6f4d] focus:ring-2 focus:ring-[#ff6f4d]/20 transition-all text-sm font-medium"
-                    />
-                  </div>
-                </div>
+                <FormField
+                  label="Full Name"
+                  required
+                  value={address.name}
+                  placeholder="Riya Sharma"
+                  error={fieldErrors.name}
+                  onChange={(e) => {
+                    setAddress({ ...address, name: e.target.value });
+                    if (e.target.value) clearError("name");
+                    else setError("name", "Full name is required");
+                  }}
+                />
+                <FormField
+                  label="Address Line 1"
+                  required
+                  value={address.addressLine1}
+                  placeholder="123 Green Park, Near City Mall"
+                  error={fieldErrors.addressLine1}
+                  onChange={(e) => {
+                    setAddress({ ...address, addressLine1: e.target.value });
+                    if (e.target.value) clearError("addressLine1");
+                    else setError("addressLine1", "Address is required");
+                  }}
+                />
+                <FormField
+                  label="Apartment, Suite, etc. (Optional)"
+                  className="sm:col-span-2"
+                  value={address.addressLine2}
+                  placeholder="A-101, Sunshine Apartments"
+                  onChange={(e) => setAddress({ ...address, addressLine2: e.target.value })}
+                />
+                <FormField
+                  label="Pincode"
+                  required
+                  value={address.pincode}
+                  placeholder="560001"
+                  maxLength={6}
+                  inputMode="numeric"
+                  error={fieldErrors.pincode}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+                    setAddress({ ...address, pincode: val });
+                    if (/^[1-9][0-9]{5}$/.test(val)) clearError("pincode");
+                    else if (val.length > 0) setError("pincode", "Enter a valid 6-digit pincode");
+                    else setError("pincode", "Pincode is required");
+                  }}
+                />
+                <CustomDropdown
+                  label="State"
+                  required
+                  options={INDIA_STATES}
+                  value={address.state}
+                  placeholder="Select State"
+                  error={fieldErrors.state}
+                  onChange={(val) => {
+                    setAddress({ ...address, state: val, city: "" });
+                    clearError("state");
+                  }}
+                />
+                <CustomDropdown
+                  label="City"
+                  required
+                  options={address.state ? (CITIES_BY_STATE[address.state] || []) : []}
+                  value={address.city}
+                  placeholder={address.state ? "Select City" : "Select state first"}
+                  error={fieldErrors.city}
+                  disabled={!address.state}
+                  onChange={(val) => {
+                    setAddress({ ...address, city: val });
+                    clearError("city");
+                  }}
+                />
               </div>
             </div>
 
@@ -939,32 +982,7 @@ export default function CheckoutPage() {
                     </div>
                   </div>
                 </label>
-                <label
-                  className={`flex items-center justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all ${
-                    paymentMethod === "COD"
-                      ? "border-[#ff6f4d] bg-[#ff6f4d]/5"
-                      : "border-gray-100 hover:border-gray-200"
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="radio"
-                      name="payment"
-                      checked={paymentMethod === "COD"}
-                      onChange={() => setPaymentMethod("COD")}
-                      className="w-5 h-5 text-[#ff6f4d] focus:ring-[#ff6f4d]"
-                    />
-                    <div>
-                      <div className="font-bold text-[#142653] flex items-center gap-2">
-                        <Banknote className="w-4 h-4 text-green-600" /> Cash on
-                        Delivery
-                      </div>
-                      <div className="text-xs text-[#142653]/60">
-                        Pay when your order is delivered
-                      </div>
-                    </div>
-                  </div>
-                </label>
+
               </div>
             </div>
           </div>
@@ -1100,30 +1118,6 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-              {/* Coupon */}
-              <div className="bg-[#FFF8F5] rounded-2xl p-4 mb-6">
-                <p className="text-xs font-bold text-[#ff6f4d] mb-2 flex items-center gap-1">
-                  <span className="bg-[#ff6f4d] text-white w-4 h-4 rounded-full flex items-center justify-center text-[10px]">
-                    %
-                  </span>
-                  Apply Coupon Code
-                </p>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={coupon}
-                    onChange={(e) => setCoupon(e.target.value)}
-                    placeholder="Enter coupon code"
-                    className="flex-grow bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-[#ff6f4d] transition-colors"
-                  />
-                  <button
-                    onClick={() => alert("Coupon validation coming soon!")}
-                    className="bg-[#142653] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-[#142653]/90 transition-colors"
-                  >
-                    Apply
-                  </button>
-                </div>
-              </div>
 
               {/* Totals */}
               <div className="space-y-3 mb-6 border-b border-gray-100 pb-6">

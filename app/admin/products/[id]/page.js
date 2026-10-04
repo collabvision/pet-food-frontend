@@ -128,14 +128,14 @@ export default function EditProductPage() {
             />
 
             {error && (
-                <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
                     {error}
                 </div>
             )}
 
             <form
                 onSubmit={handleSubmit}
-                className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6"
+                className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-6 shadow-sm"
             >
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                     <Input
@@ -147,14 +147,14 @@ export default function EditProductPage() {
 
 
                     <div>
-                        <label className="mb-2 block text-sm text-zinc-300">
+                        <label className="mb-2 block text-sm font-bold text-[#102f68]">
                             Category
                         </label>
 
                         <select
                             value={form.category}
                             onChange={(e) => updateField('category', e.target.value)}
-                            className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-white outline-none focus:border-orange-400"
+                            className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-900 outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-400/10 transition"
                         >
                             <option value="">Select category</option>
 
@@ -214,7 +214,7 @@ export default function EditProductPage() {
                     />
 
                     <div className="md:col-span-2">
-                        <label className="mb-2 block text-sm text-zinc-300">
+                        <label className="mb-2 block text-sm font-bold text-[#102f68]">
                             Description
                         </label>
 
@@ -224,7 +224,7 @@ export default function EditProductPage() {
                             onChange={(e) =>
                                 updateField('description', e.target.value)
                             }
-                            className="w-full resize-y rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-orange-400"
+                            className="w-full resize-y rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-orange-400 focus:ring-4 focus:ring-orange-400/10 transition"
                         />
                     </div>
 
@@ -253,7 +253,7 @@ export default function EditProductPage() {
                     <button
                         type="button"
                         onClick={() => router.back()}
-                        className="rounded-xl border border-zinc-800 px-5 py-3 text-sm text-zinc-300 transition hover:bg-zinc-900"
+                        className="rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-bold text-zinc-700 transition hover:bg-zinc-50"
                     >
                         Cancel
                     </button>
@@ -261,7 +261,7 @@ export default function EditProductPage() {
                     <button
                         type="submit"
                         disabled={saving}
-                        className="rounded-xl bg-orange-400 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-orange-300 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {saving ? 'Saving...' : 'Save Changes'}
                     </button>
@@ -281,7 +281,7 @@ function Input({
 }) {
     return (
         <div>
-            <label className="mb-2 block text-sm text-zinc-300">
+            <label className="mb-2 block text-sm font-bold text-[#102f68]">
                 {label}
             </label>
 
@@ -291,7 +291,7 @@ function Input({
                 onChange={onChange}
                 required={required}
                 placeholder={placeholder}
-                className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-orange-400"
+                className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-orange-400 focus:ring-4 focus:ring-orange-400/10 transition"
             />
         </div>
     );
@@ -299,17 +299,17 @@ function Input({
 
 function Toggle({ label, checked, onChange }) {
     return (
-        <label className="flex cursor-pointer items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-            <span className="text-sm text-zinc-300">{label}</span>
+        <label className="flex cursor-pointer items-center justify-between rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+            <span className="text-sm font-bold text-zinc-700">{label}</span>
 
             <button
                 type="button"
                 onClick={() => onChange(!checked)}
-                className={`relative h-6 w-11 rounded-full transition ${checked ? 'bg-orange-400' : 'bg-zinc-700'
+                className={`relative h-6 w-11 rounded-full transition ${checked ? 'bg-orange-500' : 'bg-zinc-300'
                     }`}
             >
                 <span
-                    className={`absolute top-1 h-4 w-4 rounded-full bg-white transition ${checked ? 'left-6' : 'left-1'
+                    className={`absolute top-1 h-4 w-4 rounded-full bg-white transition shadow-sm ${checked ? 'left-6' : 'left-1'
                         }`}
                 />
             </button>

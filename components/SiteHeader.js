@@ -14,12 +14,11 @@ import {
 } from "./Icons";
 
 const NAV_LINKS = [
+  { label: "Home", href: "/" },
+  { label: "About", href: "/about" },
   { label: "Shop", href: "/products" },
-  { label: "Pet Care", href: "/pet-care" },
-  { label: "Categories", href: "/products" },
-  { label: "Vet Approved", href: "/products?vetApproved=true" },
-  { label: "Community", href: "/community" },
-  { label: "Offers", href: "/offers" },
+  { label: "Contact", href: "/contact" },
+  { label: "Prescription Process", href: "/prescription-process" },
 ];
 
 export default function SiteHeader() {
@@ -41,7 +40,12 @@ export default function SiteHeader() {
    * /admin/orders/123
    * etc.
    */
-  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+  if (
+    pathname === "/admin" || 
+    pathname.startsWith("/admin/") ||
+    pathname === "/checkout" ||
+    pathname.startsWith("/checkout/")
+  ) {
     return null;
   }
 
@@ -300,14 +304,7 @@ export default function SiteHeader() {
                 />
               )}
 
-              {/* WISHLIST */}
-              <Link
-                href="/wishlist"
-                aria-label="Wishlist"
-                className="flex h-10 w-10 items-center justify-center rounded-xl text-[#10265f] transition hover:bg-[#fff0e8] hover:text-[#ff6543]"
-              >
-                <IconHeart />
-              </Link>
+
 
               {/* CART */}
               <Link
@@ -379,14 +376,8 @@ export default function SiteHeader() {
                 </Link>
               ))}
 
-              <div className="mt-3 grid grid-cols-2 gap-2 border-t border-[#ebe7e3] pt-3">
-                <Link
-                  href="/wishlist"
-                  onClick={() => setMenuOpen(false)}
-                  className="rounded-xl bg-white px-3 py-3 text-center text-[10px] font-bold text-[#10265f] shadow-sm"
-                >
-                  ♡ Wishlist
-                </Link>
+              <div className="mt-3 grid grid-cols-1 gap-2 border-t border-[#ebe7e3] pt-3">
+
 
                 <Link
                   href="/cart"

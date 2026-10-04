@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { inventoryService } from '@/services/api-service';
+import { inventoryService } from '@/lib/services';
 import PageHeader from '@/components/admin/PageHeader';
 import LoadingState from '@/components/admin/LoadingState';
 import EmptyState from '@/components/admin/EmptyState';

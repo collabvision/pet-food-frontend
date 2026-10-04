@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { shippingService } from '@/services/api-service';
+import { shippingService } from '@/lib/services';
 import PageHeader from '@/components/admin/PageHeader';
 
 export default function NewShipmentPage() {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { returnService } from '@/services/api-service';
+import { returnService } from '@/lib/services';
 import PageHeader from '@/components/admin/PageHeader';
 import LoadingState from '@/components/admin/LoadingState';
 import StatusBadge from '@/components/admin/StatusBadge';
