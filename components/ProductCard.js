@@ -3,12 +3,14 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Eye,
   Heart,
   ShoppingBag,
   ArrowUpRight,
   Check,
+  Zap,
 } from 'lucide-react';
 
 import { useStore } from '../store/useStore';
@@ -89,6 +91,15 @@ export default function ProductCard({ product }) {
     } finally {
       setAddingToCart(false);
     }
+  };
+
+  const router = useRouter();
+
+  const handleBuyNow = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!product?._id) return;
+    router.push(`/checkout?buyNow=${product._id}&qty=1`);
   };
 
   const handleWishlist = (event) => {
@@ -396,46 +407,56 @@ export default function ProductCard({ product }) {
           </span>
         </div>
 
-        {/* Price */}
+        {/* Price + quick add-to-cart */}
 
-        <div className="mt-3 flex flex-wrap items-baseline gap-2">
-          <span
-            className="
-              text-lg
-              font-bold
-              tracking-tight
-              text-navy
-            "
-          >
-            ₹{formatPrice(price)}
-          </span>
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-baseline gap-1.5">
+            <span className="text-lg font-bold tracking-tight text-navy">
+              ₹{formatPrice(price)}
+            </span>
 
-          {compareAtPrice &&
-            compareAtPrice > price && (
+            {compareAtPrice && compareAtPrice > price && (
               <>
-                <span
-                  className="
-                    text-xs
-                    text-navy/35
-                    line-through
-                  "
-                >
+                <span className="text-xs text-navy/35 line-through">
                   ₹{formatPrice(compareAtPrice)}
                 </span>
 
                 {discount && (
-                  <span
-                    className="
-                      text-[10px]
-                      font-bold
-                      text-coral
-                    "
-                  >
+                  <span className="text-[10px] font-bold text-coral">
                     {discount}% OFF
                   </span>
                 )}
               </>
             )}
+          </div>
+
+          {/* Compact add-to-cart */}
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            disabled={addingToCart}
+            aria-label={`Add ${name} to cart`}
+            className={`
+              flex flex-shrink-0 items-center justify-center gap-1.5
+              rounded-xl px-3 py-2
+              text-[11px] font-bold text-white shadow-sm
+              transition-all duration-200 active:scale-95
+              ${addedToCart ? 'bg-green-600' : 'bg-navy hover:bg-coral'}
+              ${addingToCart ? 'cursor-wait opacity-60' : ''}
+            `}
+          >
+            {addedToCart ? (
+              <>
+                <Check size={13} />
+                <span>Added</span>
+              </>
+            ) : (
+              <>
+                <ShoppingBag size={13} />
+                <span>{addingToCart ? 'Adding...' : 'Add to Cart'}</span>
+              </>
+            )}
+          </button>
         </div>
 
         {/* ─────────────────────────────
@@ -444,7 +465,6 @@ export default function ProductCard({ product }) {
 
         <div className="mt-4 flex gap-2">
           {/* View Details */}
-
           <Link
             href={`/product/${slug}`}
             className="
@@ -470,19 +490,16 @@ export default function ProductCard({ product }) {
             "
           >
             <Eye size={14} />
-
-            <span className="truncate">
-              View Details
-            </span>
+            <span className="truncate">View Details</span>
           </Link>
 
-          {/* Add To Cart */}
+    
 
+          {/* Buy Now */}
           <button
             type="button"
-            onClick={handleAddToCart}
-            disabled={addingToCart}
-            className={`
+            onClick={handleBuyNow}
+            className="
               flex
               min-w-0
               flex-1
@@ -490,40 +507,21 @@ export default function ProductCard({ product }) {
               justify-center
               gap-1.5
               rounded-xl
+              bg-coral
               px-2
               py-2.5
               text-[11px]
               font-bold
+              text-white
               shadow-sm
               transition-all
               duration-200
-              ${
-                addedToCart
-                  ? 'bg-green-600 text-white'
-                  : 'bg-navy text-white hover:bg-navy/90 hover:shadow-md'
-              }
-              ${
-                addingToCart
-                  ? 'cursor-wait opacity-70'
-                  : ''
-              }
-            `}
+              hover:bg-[#f45332]
+              active:scale-95
+            "
           >
-            {addedToCart ? (
-              <>
-                <Check size={14} />
-                <span>Added</span>
-              </>
-            ) : (
-              <>
-                <ShoppingBag size={14} />
-                <span>
-                  {addingToCart
-                    ? 'Adding...'
-                    : 'Add to Cart'}
-                </span>
-              </>
-            )}
+            <Zap size={14} />
+            <span className="truncate">Buy Now</span>
           </button>
         </div>
 

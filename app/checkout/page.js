@@ -17,6 +17,7 @@ import {
   orderService,
   paymentService,
   prescriptionService,
+  productService,
 } from "@/lib/services";
 import { convertToWebp } from "@/lib/utils/convertToWebp";
 import { CustomDropdown, FormField } from "@/components/FormComponents";
@@ -59,6 +60,11 @@ export default function CheckoutPage() {
   const searchParams = useSearchParams();
   const { user, status: authStatus } = useAuth();
 
+  // Buy Now mode: ?buyNow=PRODUCT_ID&qty=N
+  const buyNowProductId = searchParams?.get("buyNow") || null;
+  const buyNowQty = Math.max(1, parseInt(searchParams?.get("qty") || "1", 10));
+  const isBuyNow = !!buyNowProductId;
+
   // "non-prescription" mode is triggered from the cart page when the user
   // wants to check out only non-prescription items.
   const initialMode =
@@ -67,6 +73,7 @@ export default function CheckoutPage() {
       : "ALL";
 
   const [cart, setCart] = useState(null);
+  const [buyNowCart, setBuyNowCart] = useState(null); // synthetic cart for buyNow
   const [prescriptions, setPrescriptions] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -110,14 +117,27 @@ export default function CheckoutPage() {
   const fetchCart = useCallback(async () => {
     try {
       setIsLoading(true);
-      const res = await cartService.get();
-      setCart(res?.data || null);
+      if (isBuyNow) {
+        // Fetch just this single product and build a synthetic cart
+        const res = await productService.getById(buyNowProductId);
+        const product = res?.data || null;
+        if (product) {
+          setBuyNowCart({
+            items: [{ product, quantity: buyNowQty, price: product.price, _id: product._id }],
+            totalItems: buyNowQty,
+            totalAmount: product.price * buyNowQty,
+          });
+        }
+      } else {
+        const res = await cartService.get();
+        setCart(res?.data || null);
+      }
     } catch (err) {
       console.error("Cart fetch error:", err);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isBuyNow, buyNowProductId, buyNowQty]);
 
   const fetchPrescriptions = useCallback(async () => {
     try {
@@ -341,6 +361,13 @@ export default function CheckoutPage() {
 
       const apiPaymentMethod = paymentMethod === "RAZORPAY" ? "ONLINE" : "COD";
 
+      // In buyNow mode: clear the cart and add ONLY this product so the
+      // backend doesn't see stale prescription items from a previous session.
+      if (isBuyNow && buyNowProductId) {
+        await cartService.clear();
+        await cartService.addItem(buyNowProductId, buyNowQty);
+      }
+
       const orderRes = await orderService.create(
         shippingAddress,
         apiPaymentMethod,
@@ -428,9 +455,9 @@ export default function CheckoutPage() {
       return;
     }
 
-    const allItems = cart?.items || [];
-    const rxItems = allItems.filter((i) => i.product?.requiresPrescription);
-    const nonRxItems = allItems.filter((i) => !i.product?.requiresPrescription);
+    const activeCartItems = (isBuyNow ? buyNowCart?.items : cart?.items) || [];
+    const rxItems = activeCartItems.filter((i) => i.product?.requiresPrescription);
+    const nonRxItems = activeCartItems.filter((i) => !i.product?.requiresPrescription);
 
     const blockedRxItems = rxItems.filter((i) => {
       const rx = prescriptions[i.product?._id];
@@ -471,7 +498,9 @@ export default function CheckoutPage() {
     );
   }
 
-  const allItems = cart?.items || [];
+  // Use buyNowCart when in buy-now mode, otherwise use the real cart
+  const activeCart = isBuyNow ? buyNowCart : cart;
+  const allItems = activeCart?.items || [];
   const nonRxItems = allItems.filter((i) => !i.product?.requiresPrescription);
   const rxItems = allItems.filter((i) => i.product?.requiresPrescription);
   const blockedRxItems = rxItems.filter((i) => {

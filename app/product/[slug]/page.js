@@ -98,9 +98,9 @@ export default function ProductDetailsPage() {
     }
   };
 
-  const handleBuyNow = async () => {
-    await handleAddToCart();
-    router.push("/cart");
+  const handleBuyNow = () => {
+    if (!product) return;
+    router.push(`/checkout?buyNow=${product._id}&qty=${quantity}`);
   };
 
   if (loading) {
