@@ -7,7 +7,8 @@ import {
   Package, FileText, RefreshCcw, Heart, Bell, ArrowRight,
   Search, X, Check, Truck, Headphones
 } from "lucide-react";
-import { orderService, returnService } from "@/lib/services";
+import { orderService, returnService, reviewService } from "@/lib/services";
+import { Star } from "lucide-react";
 
 /* ─── Status helpers ───────────────────────────────────── */
 const STATUS_CONFIG = {
@@ -71,6 +72,10 @@ export default function MyOrdersPage() {
   // Return modal
   const [returnModal, setReturnModal] = useState({ open: false, order: null, reason: "", comments: "", items: [] });
   const [returnLoading, setReturnLoading] = useState(false);
+
+  // Review modal
+  const [reviewModal, setReviewModal] = useState({ open: false, order: null, productId: "", rating: 5, title: "", body: "" });
+  const [reviewLoading, setReviewLoading] = useState(false);
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -167,6 +172,30 @@ export default function MyOrdersPage() {
       alert(err?.response?.data?.message || err?.message || "Failed to submit return request");
     } finally {
       setReturnLoading(false);
+    }
+  };
+
+  const openReviewModal = async (order) => {
+    // Start with the first product
+    setReviewModal({ open: true, order, productId: order.items[0].productId, rating: 5, title: "", body: "" });
+  };
+
+  const handleSubmitReview = async () => {
+    try {
+      setReviewLoading(true);
+      await reviewService.create(
+        reviewModal.productId,
+        reviewModal.order._id,
+        reviewModal.rating,
+        reviewModal.title,
+        reviewModal.body
+      );
+      alert("Review submitted successfully!");
+      setReviewModal({ open: false, order: null, productId: "", rating: 5, title: "", body: "" });
+    } catch (err) {
+      alert(err?.response?.data?.message || err?.message || "Failed to submit review");
+    } finally {
+      setReviewLoading(false);
     }
   };
 
@@ -379,12 +408,20 @@ export default function MyOrdersPage() {
                       )}
 
                       {order.orderStatus === "DELIVERED" && (
-                        <Link
-                          href="/products"
-                          className="text-sm font-bold text-white bg-coral px-5 py-2 rounded-xl hover:bg-orange-500 transition-all flex items-center gap-1.5"
-                        >
-                          🛒 Buy Again
-                        </Link>
+                        <>
+                          <button
+                            onClick={() => openReviewModal(order)}
+                            className="text-sm font-bold text-amber-600 border-2 border-amber-200 px-5 py-2 rounded-xl hover:bg-amber-50 transition-all flex items-center gap-1.5"
+                          >
+                            <Star className="w-4 h-4 fill-amber-600" /> Rate
+                          </button>
+                          <Link
+                            href="/products"
+                            className="text-sm font-bold text-white bg-coral px-5 py-2 rounded-xl hover:bg-orange-500 transition-all flex items-center gap-1.5"
+                          >
+                            🛒 Buy Again
+                          </Link>
+                        </>
                       )}
 
                       {canCancel(order.orderStatus) && (
@@ -580,6 +617,90 @@ export default function MyOrdersPage() {
                 className="flex-1 bg-purple-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-purple-700 transition-all disabled:opacity-60"
               >
                 {returnLoading ? "Submitting..." : "Submit Return Request"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════ REVIEW MODAL ══════════════ */}
+      {reviewModal.open && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setReviewModal({ open: false, order: null, productId: "", rating: 5, title: "", body: "" })}>
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+                <Star className="w-6 h-6 text-amber-500 fill-amber-500" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-[#142653]">Rate Product</h3>
+                <p className="text-sm text-[#142653]/50">Order #{reviewModal.order?.orderNumber}</p>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-bold text-[#142653]/70 mb-2">Select Product</label>
+              <select
+                value={reviewModal.productId}
+                onChange={(e) => setReviewModal({ ...reviewModal, productId: e.target.value })}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200 transition-all"
+              >
+                {reviewModal.order?.items.map(item => (
+                  <option key={item.productId} value={item.productId}>{item.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-bold text-[#142653]/70 mb-2">Rating</label>
+              <div className="flex items-center gap-2">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setReviewModal({ ...reviewModal, rating: star })}
+                    className="p-1 hover:scale-110 transition-transform"
+                  >
+                    <Star className={`w-8 h-8 ${star <= reviewModal.rating ? 'text-amber-400 fill-amber-400' : 'text-gray-200'}`} />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-bold text-[#142653]/70 mb-2">Review Title (optional)</label>
+              <input
+                type="text"
+                value={reviewModal.title}
+                onChange={(e) => setReviewModal({ ...reviewModal, title: e.target.value })}
+                placeholder="Summary of your review"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200 transition-all"
+              />
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-bold text-[#142653]/70 mb-2">Review Details (optional)</label>
+              <textarea
+                value={reviewModal.body}
+                onChange={(e) => setReviewModal({ ...reviewModal, body: e.target.value })}
+                placeholder="What did you like or dislike?"
+                rows={3}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200 transition-all resize-none"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setReviewModal({ open: false, order: null, productId: "", rating: 5, title: "", body: "" })}
+                className="flex-1 border-2 border-gray-200 text-[#142653] py-3 rounded-xl font-bold text-sm hover:bg-gray-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmitReview}
+                disabled={reviewLoading}
+                className="flex-1 bg-amber-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-amber-600 transition-all disabled:opacity-60"
+              >
+                {reviewLoading ? "Submitting..." : "Submit Review"}
               </button>
             </div>
           </div>

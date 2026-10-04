@@ -3,7 +3,7 @@ import Link from 'next/link';
 export default function CategoryStrip({ categories }) {
   return (
     <nav aria-label="Shop by category" className="border-b border-navy/8 bg-white">
-      <div className="mx-auto flex max-w-7xl gap-6 overflow-x-auto px-6 py-5">
+      <div className="mx-auto flex max-w-7xl justify-start xl:justify-center gap-8 xl:gap-14 overflow-x-auto px-6 py-5 snap-x scrollbar-hide">
         {categories.map((cat) => (
           <Link
             key={cat._id || cat.slug}

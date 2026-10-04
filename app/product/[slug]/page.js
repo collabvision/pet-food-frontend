@@ -228,7 +228,7 @@ export default function ProductDetailsPage() {
             </div>
 
             <span className="text-xs font-medium text-gray-500">
-              4.8 (1,234 reviews)
+              {product.rating != null ? Number(product.rating).toFixed(1) : "—"} ({product.reviewCount ?? 0} reviews)
             </span>
           </div>
 

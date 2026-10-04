@@ -125,7 +125,7 @@ export default function ProductCard({ product }) {
 
       <div className="relative p-3 pb-0">
         <Link
-          href={`/products/${slug}`}
+          href={`/product/${slug}`}
           className="
             relative
             block
@@ -357,7 +357,7 @@ export default function ProductCard({ product }) {
         {/* Product title */}
 
         <Link
-          href={`/products/${slug}`}
+          href={`/product/${slug}`}
           className="
             line-clamp-2
             min-h-[40px]
@@ -446,7 +446,7 @@ export default function ProductCard({ product }) {
           {/* View Details */}
 
           <Link
-            href={`/products/${slug}`}
+            href={`/product/${slug}`}
             className="
               flex
               min-w-0

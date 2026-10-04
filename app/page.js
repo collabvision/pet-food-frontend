@@ -408,7 +408,7 @@ function CategoryStrip({ categories = [] }) {
   return (
     <section className="mx-auto max-w-[1440px] px-3 pt-5 sm:px-5 lg:px-6">
 
-      <div className="flex justify-between gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex gap-4 sm:gap-6 lg:gap-8 justify-start xl:justify-center overflow-x-auto pb-4 w-full snap-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
 
         {items.map((category, index) => {
 
